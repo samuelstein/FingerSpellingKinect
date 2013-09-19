@@ -9,6 +9,7 @@ namespace FingerSpelling.Gestures
     public class Gesture
     {
 
+        public String id;
         public String gestureName;
         public HandData hand;
         //private String hash;

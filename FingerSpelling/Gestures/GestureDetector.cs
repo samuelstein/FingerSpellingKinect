@@ -18,6 +18,8 @@ namespace FingerSpelling.Gestures
     //public delegate void NewDataHandler<HandCollection>(object sender, EventArgs e);
     public delegate void GestureFoundEventHandler(object sender, GestureFoundEvent e);
 
+    public delegate void HandFoundEventHandler(object sender, HandFoundEvent e);
+
     public sealed class GestureDetector
     {
         private bool lefty;
@@ -28,6 +30,7 @@ namespace FingerSpelling.Gestures
         private HandData actualHand;
 
         public event GestureFoundEventHandler gestureFoundEventHandler;
+        public event HandFoundEventHandler handFoundEventHandler;
 
         private static readonly GestureDetector gestureDetector=new GestureDetector();
 
@@ -69,10 +72,7 @@ namespace FingerSpelling.Gestures
             this.text = text;
             this.handDataSource = handDataSource;
 
-            //if (handDataSource!=null)
-            //{
             this.handDataSource.NewDataAvailable += new NewDataHandler<HandCollection>(handDataSource_NewDataAvailable);
-            //}
             handDataSource.Start();
         }
 
@@ -84,6 +84,11 @@ namespace FingerSpelling.Gestures
             {
                 //always use first (closest) hand
                 actualHand = handData.Hands[0];
+
+                if (handFoundEventHandler != null)
+                {
+                    handFoundEventHandler(this, new HandFoundEvent(actualHand));
+                }
             }
 
             for (var index = 0; index < handData.Count; index++)
@@ -189,8 +194,6 @@ namespace FingerSpelling.Gestures
             Gesture gesture = new Gesture();
             gesture.gestureName = gestureName;
             gesture.hand = actualHand;
-
-            Console.WriteLine(gestureName);
 
             return DataHandler.saveToFile("XML", gestureName, FileMode.Create, FileAccess.Write, gesture);
         }

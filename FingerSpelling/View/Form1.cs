@@ -1,6 +1,5 @@
-﻿using System.Drawing;
-using System.IO;
-using System.Runtime.Serialization.Formatters.Binary;
+﻿using System.ComponentModel;
+using System.Drawing;
 using CCT.NUI.Core;
 using CCT.NUI.Core.Clustering;
 using CCT.NUI.Core.OpenNI;
@@ -11,16 +10,16 @@ using CCT.NUI.Visual;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.Windows.Forms;
+using FingerSpelling.Events;
 using FingerSpelling.Gestures;
 using FingerSpelling.Speech;
 using FingerSpelling.tools;
 using OpenNI;
 using System.Windows.Threading;
-using Point = CCT.NUI.Core.Point;
+using Raven.Client.Embedded;
 
-namespace FingerSpelling
+namespace FingerSpelling.View
 {
     public partial class AppForm : Form
     {
@@ -34,9 +33,13 @@ namespace FingerSpelling
 
         private Boolean initializationDone = false;
 
+        // This BackgroundWorker is used to demonstrate the  
+        // preferred way of performing asynchronous operations. 
+        private BackgroundWorker setTextWorker;
+
         // This delegate enables asynchronous calls for setting 
         // the text property on a TextBox control. 
-        delegate void SetTextCallback(string text);
+        delegate void SetTextCallback(string text, Control control);
 
         private ClusterDataSourceSettings clusteringSettings = new ClusterDataSourceSettings();
         private ShapeDataSourceSettings shapeSettings = new ShapeDataSourceSettings();
@@ -48,6 +51,10 @@ namespace FingerSpelling
         private DepthGenerator depth;                       // This will generate the depth image for you
 
         private readonly String xmlPath = "config.xml";
+
+        private Graphics g;
+        private EmbeddableDocumentStore database;
+        private HandData handData;
 
         public AppForm()
         {
@@ -63,11 +70,17 @@ namespace FingerSpelling
             Cursor.Current = Cursors.Default;
             this.videoControl.ClearLayers();
 
+            g = this.shapeBox.CreateGraphics();
+
+            database = DataHandler.initializeDB();
+
             gestureDetector = GestureDetector.getGestureDetector;
 
             // Initialize the context from the configuration file
             //this.context = new Context(@"config.xml");
-            this.context = Context.CreateFromXmlFile(@"config.xml", out scriptNode);
+            //this.context = Context.CreateFromXmlFile(@"..\..\..\Resources\OpenNIconfig.xml", out scriptNode);
+            this.context = Context.CreateFromXmlFile(@"OpenNI-config.xml", out scriptNode);
+
             // Get the depth generator from the config file.
             this.depth = context.FindExistingNode(NodeType.Depth) as DepthGenerator;
             if (this.depth == null)
@@ -124,12 +137,15 @@ namespace FingerSpelling
         private void AppForm_FormClosing(object sender, FormClosingEventArgs e)
         {
             this.Clear();
+            this.removeEventHandlers();
 
             if (this.dataSourceFactory != null)
             {
                 this.dataSourceFactory.Dispose();
             }
+
         }
+
         private Boolean InitializeOpenNi()
         {
             try
@@ -172,6 +188,12 @@ namespace FingerSpelling
             }
         }
 
+        private void removeEventHandlers()
+        {
+            this.gestureDetector.handFoundEventHandler -= gestureDetector_handFoundEventHandler;
+
+        }
+
         private void SetHandDataSource(IHandDataSource dataSource, bool overrideSource)
         {
             SetDataSource(dataSource, new HandLayer(dataSource), overrideSource);
@@ -205,6 +227,7 @@ namespace FingerSpelling
         private void exitButton_Click(object sender, EventArgs e)
         {
             this.Clear();
+            this.removeEventHandlers();
 
             if (this.dataSourceFactory != null)
             {
@@ -223,17 +246,25 @@ namespace FingerSpelling
         // 
         // If the calling thread is the same as the thread that created 
         // the TextBox control, the Text property is set directly.  
-        private void addText(String text)
+        private void addText(String text, Control control)
         {
             //System.Threading.Thread.Sleep(500);
-            if (this.textBox.InvokeRequired)
+            if (control.InvokeRequired)
             {
                 var d = new SetTextCallback(addText);
-                this.Invoke(d, new object[] { text });
+                this.Invoke(d, new object[] { text, control });
             }
             else
             {
-                this.textBox.AppendText(text + "\n");
+                Type t = typeof(Control);
+                if (t == typeof(TextBox))
+                {
+                    ((TextBox)control).AppendText(text + "\n");
+                }
+                else
+                {
+                    control.Text = text;
+                }
             }
         }
 
@@ -247,16 +278,57 @@ namespace FingerSpelling
 
                 //gestureDetector = new GestureDetector(handDataSource, this.radioButtonLefty.Checked, this.radioButtonRighty.Checked, this.radioButtonSpeech.Checked, this.radioButtonText.Checked);
 
-
                 gestureDetector.startDetecting(handDataSource, this.radioButtonLefty.Checked, this.radioButtonRighty.Checked, this.radioButtonSpeech.Checked, this.radioButtonText.Checked);
-
+                gestureDetector.handFoundEventHandler += new HandFoundEventHandler(gestureDetector_handFoundEventHandler);
             }
         }
 
+        void gestureDetector_handFoundEventHandler(object sender, HandFoundEvent e)
+        {
+            this.handData = e.handData;
+
+            //g.Clear(Color.Black);
+
+            if (handData != null)
+            {
+                Console.WriteLine(handData.Volume);
+                this.addText("W: " + handData.Volume.Width + " H: " + handData.Volume.Height + " D: " +
+                             handData.Volume.Depth, this.volumeTextField);
+                
+                this.addText(handData.Contour.Points.Count.ToString(), this.pointsTextBox);
+
+                if (handData.HasFingers)
+                {
+                    this.addText(handData.FingerPoints.Count.ToString(), this.fingerPointTextField);
+                }
+                else
+                {
+                    this.addText("", this.fingerPointTextField);
+                }
+                //g.DrawPolygon(new Pen(Color.White, 2), MathHelper.convertToDrawablePointList(handData).ToArray());
+
+            }
+            else
+            {
+                this.addText("", this.volumeTextField);
+                //this.addText("", this.fingerPointTextField);
+            }
+
+        }
+
+        //private void setText()
+        //{
+        //    setTextWorker.RunWorkerAsync();
+        //}
+
+        //private void textWorker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
+        //{
+        //    this.
+        //}
 
         private void generateOutput(String gesture)
         {
-            this.addText(gesture);
+            //this.addText(gesture, this.textBox);
             if (this.textToSpeachEnabled)
             {
                 speechSynthesizer.stopVoice();
@@ -313,6 +385,7 @@ namespace FingerSpelling
             {
                 case Keys.Escape:
                     this.Clear();
+                    this.removeEventHandlers();
 
                     if (this.dataSourceFactory != null)
                     {
@@ -338,22 +411,27 @@ namespace FingerSpelling
 
         private void fingeralphabetButton_Click(object sender, EventArgs e)
         {
-            System.Diagnostics.Process.Start(@"Resources\fingeralphabet-GERv02-A4_G01.pdf");
+            System.Diagnostics.Process.Start(@"Resources\Assets\fingeralphabet-GERv02-A4_G01.pdf");
         }
 
         private void recordButton_Click(object sender, EventArgs e)
         {
-            //if (gestureDetector != null)
-            //{
             gestureDetector = GestureDetector.getGestureDetector;
-            bool success = gestureDetector.recordGesture(gestureName.Text);
 
-            if (!success)
+            if (!String.IsNullOrWhiteSpace(gestureName.Text))
             {
-                MessageBox.Show("Could not store Gesture", "Gesture Store Error", MessageBoxButtons.OK,
-                                MessageBoxIcon.Error);
+                //bool success = gestureDetector.recordGesture(gestureName.Text);
+                String success = DataHandler.saveToDB(database, new Gesture(gestureName.Text, this.handData));
+
+                MessageBox.Show("GESTURE ID " + success);
+
+                if (String.IsNullOrEmpty(success))
+                {
+                    MessageBox.Show("Could not store Gesture", "Gesture Store Error", MessageBoxButtons.OK,
+                                    MessageBoxIcon.Error);
+                }
             }
-            //}
+
         }
 
         private void readButton_Click(object sender, EventArgs e)
@@ -361,36 +439,21 @@ namespace FingerSpelling
             if (gestureName.Text != "")
             {
                 //Open the file written above and read values from it.
-                Console.WriteLine("Resources/Gestures/" + gestureName.Text + ".dat");
-                Stream stream = File.Open(@"Resources/Gestures/" + gestureName.Text + ".dat", FileMode.Open);
-                BinaryFormatter bformatter = new BinaryFormatter();
-                bformatter = new BinaryFormatter();
+                //Console.WriteLine("Resources/Gestures/" + gestureName.Text + ".dat");
+                //Stream stream = File.Open(@"Resources/Gestures/" + gestureName.Text + ".dat", FileMode.Open);
+                //BinaryFormatter bformatter = new BinaryFormatter();
+                //bformatter = new BinaryFormatter();
 
-                Console.WriteLine("Reading Gesture");
-                Gesture g = (Gesture)bformatter.Deserialize(stream);
-                MessageBox.Show(g.hand.Contour.Count.ToString());
-                stream.Close();
+                //Console.WriteLine("Reading Gesture");
+                //Gesture g = (Gesture)bformatter.Deserialize(stream);
+                //MessageBox.Show(g.hand.Contour.Count.ToString());
+                //stream.Close();
+
+                Gesture returnedGesture = DataHandler.readFromDB(database, "gestures/" + gestureName.Text);
+                MessageBox.Show(returnedGesture.ToString());
             }
 
         }
 
-        private void shapeBox_Paint(object sender, PaintEventArgs e)
-        {
-
-            gestureDetector = GestureDetector.getGestureDetector;
-            Gesture gesture = gestureDetector.getActualGesture();
-
-            Console.WriteLine(gesture);
-
-            //e.Graphics.DrawPolygon(new Pen(Color.White,2),  MathHelper.convertToDrawablePointList(gesture).ToArray());
-            e.Graphics.DrawLine(
-            new Pen(Color.Red, 2f),
-            new System.Drawing.Point(0, 0),
-            new System.Drawing.Point(shapeBox.Size.Width, shapeBox.Size.Height));
-
-            //e.Graphics.DrawEllipse(
-            //    new Pen(Color.Red, 2f),
-            //    0, 0, shapeBox.Size.Width, shapeBox.Size.Height);
-        }
     }
 }

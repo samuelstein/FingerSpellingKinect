@@ -10,12 +10,14 @@ using System.Xml;
 using System.Xml.Serialization;
 using FingerSpelling.Gestures;
 using Microsoft.Win32.SafeHandles;
+using Raven.Client;
+using Raven.Client.Embedded;
 
 namespace FingerSpelling.tools
 {
     public static class DataHandler
     {
-        private static readonly String directory = "Resources/Gestures/";
+        private static readonly String directory = "Resources/Export/Gestures/";
 
         public static bool saveToFile(String fileType, String fileName, FileMode fileMode, FileAccess fileAccess, Gesture persistObject)
         {
@@ -41,7 +43,7 @@ namespace FingerSpelling.tools
 
                 return false;
             }
-            
+
             return true;
 
         }
@@ -77,6 +79,34 @@ namespace FingerSpelling.tools
         public static void readFile()
         {
             //TODO:
+        }
+
+        public static EmbeddableDocumentStore initializeDB()
+        {
+            //Connect to DB
+            var documentStore = new EmbeddableDocumentStore { DataDirectory = @"Resources/DB" };
+            documentStore.Initialize();
+            //generate a custom Id
+            documentStore.Conventions.RegisterIdConvention<Gesture>((dbname, commands, gesture) => "gestures/" + gesture.gestureName);
+
+            return documentStore;
+        }
+
+        public static String saveToDB(EmbeddableDocumentStore documentStore, Gesture gesture)
+        {
+            // Saving the new instance to RavenDB
+            IDocumentSession session = documentStore.OpenSession();
+            session.Store(gesture);
+            String key = session.Advanced.GetDocumentId(gesture);
+            session.SaveChanges();
+
+            return key;
+        }
+
+        public static Gesture readFromDB(EmbeddableDocumentStore documentStore, String key)
+        {
+            IDocumentSession session = documentStore.OpenSession();
+            return session.Load<Gesture>(key);
         }
 
     }

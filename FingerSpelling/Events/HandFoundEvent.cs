@@ -9,11 +9,11 @@ namespace FingerSpelling.Events
 {
     public class HandFoundEvent : EventArgs
     {
-        private HandData handData;
+        public HandData handData;
 
         public HandFoundEvent(HandData handData)
         {
-            this.handData = handData;
+            this.handData=handData;
         }
     }
 }

@@ -12,7 +12,7 @@
 *.orig       # Own usage
 
 # Compiled files
-*/bin/
+#*/bin/
 */obj/
 */Obj/       # git is case sensitive
 */Generated_Code/
