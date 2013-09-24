@@ -17,7 +17,7 @@ namespace FingerSpelling.tools
         {
             List<Point> convertedList=new List<Point>();
 
-            foreach (var point in gesture.hand.Contour.Points)
+            foreach (var point in gesture.contourPoints)
             {
                 convertedList.Add(convertToDrawablePoint(point));
             }

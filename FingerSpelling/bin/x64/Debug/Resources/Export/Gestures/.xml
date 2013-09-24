@@ -1,0 +1,1 @@
+<Gesture xmlns="http://schemas.datacontract.org/2004/07/FingerSpelling.Gestures" xmlns:i="http://www.w3.org/2001/XMLSchema-instance"><gestureName/><hand i:nil="true" xmlns:a="http://schemas.datacontract.org/2004/07/CCT.NUI.HandTracking"/></Gesture>
