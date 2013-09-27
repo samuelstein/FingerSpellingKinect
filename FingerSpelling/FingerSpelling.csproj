@@ -97,10 +97,11 @@
     <Reference Include="MetroFramework, Version=1.2.0.3, Culture=neutral, PublicKeyToken=5f91a84759bf584a, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\packages\MetroFramework.RunTime.1.2.0.3\lib\net40-Client\MetroFramework.dll</HintPath>
+      <Private>True</Private>
     </Reference>
     <Reference Include="MetroFramework.Design">
       <HintPath>..\packages\MetroFramework.Design.1.2.0.3\lib\net40\MetroFramework.Design.dll</HintPath>
-      <Private>False</Private>
+      <Private>True</Private>
     </Reference>
     <Reference Include="MetroFramework.Fonts">
       <HintPath>..\packages\MetroFramework.Fonts.1.2.0.3\lib\net40\MetroFramework.Fonts.dll</HintPath>
@@ -167,6 +168,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Events\CalibrationEvent.cs" />
+    <Compile Include="Events\NoHandFoundEvent.cs" />
     <Compile Include="Events\ToCloseEvent.cs" />
     <Compile Include="Events\GestureFoundEvent.cs" />
     <Compile Include="Events\HandFoundEvent.cs" />

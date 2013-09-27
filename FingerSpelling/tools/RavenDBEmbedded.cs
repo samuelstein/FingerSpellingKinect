@@ -5,6 +5,7 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using FingerSpelling.Gestures;
+using Raven.Abstractions.Data;
 using Raven.Client.Embedded;
 using Raven.Database.Server;
 using Raven.Imports.Newtonsoft.Json.Serialization;
@@ -15,7 +16,7 @@ namespace FingerSpelling.tools
 
     public sealed class RavenDBEmbedded
     {
-        private static EmbeddableDocumentStore documentStore;// = new EmbeddableDocumentStore();
+        private static EmbeddableDocumentStore documentStore;
         private static readonly RavenDBEmbedded ravenDbEmbedded = new RavenDBEmbedded();
 
         static RavenDBEmbedded()
@@ -67,5 +68,17 @@ namespace FingerSpelling.tools
             //        BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic
             //};
         }
+
+        private static void setupFacetedSearch()
+        {
+            
+            //List<Facet> findGesture = new List<Facet>
+            //    {
+            //        new Facet{fingerCount=""}
+            //    };
+
+        }
+
+
     }
 }

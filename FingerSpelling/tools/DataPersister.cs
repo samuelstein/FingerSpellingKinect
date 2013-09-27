@@ -22,6 +22,7 @@ namespace FingerSpelling.tools
     public static class DataPersister
     {
         private static readonly String directory = "Resources/Export/Gestures/";
+        private static EmbeddableDocumentStore database;
 
         public static bool saveToFile(String fileType, String fileName, FileMode fileMode, FileAccess fileAccess, Gesture persistObject)
         {
@@ -96,9 +97,14 @@ namespace FingerSpelling.tools
         //    return documentStore;
         //}
 
-        public static String saveToDB(EmbeddableDocumentStore documentStore, Gesture gesture)
+        public static void initializeDB()
         {
-            IDocumentSession session = documentStore.OpenSession();
+            database = RavenDBEmbedded.getRavenDBInstance.getDBInstance();
+        }
+
+        public static String saveToDB(Gesture gesture)
+        {
+            IDocumentSession session = database.OpenSession();
             var previousSetting = session.Advanced.UseOptimisticConcurrency;
             String key = "";
 
@@ -128,16 +134,30 @@ namespace FingerSpelling.tools
             return key;
         }
 
-        public static Gesture readFromDB(EmbeddableDocumentStore documentStore, String key)
+        public static Gesture readFromDB(String key)
         {
-            IDocumentSession session = documentStore.OpenSession();
+            IDocumentSession session = database.OpenSession();
             return session.Load<Gesture>(key);
         }
 
-
-        public static String saveToDB(EmbeddableDocumentStore documentStore, string json)
+        public static List<Gesture> searchMatchingGesture(Gesture actualGesture)
         {
-            IDocumentSession session = documentStore.OpenSession();
+            IDocumentSession session = database.OpenSession();
+
+            return session.Query<Gesture>().Where(gesture => gesture.fingerCount == actualGesture.fingerCount).ToList();
+        }
+
+        public static List<Gesture> fetchAll()
+        {
+            IDocumentSession session = database.OpenSession();
+
+            return session.Query<Gesture>().ToList();
+        }
+
+
+        public static String saveToDB(string json)
+        {
+            IDocumentSession session = database.OpenSession();
             var previousSetting = session.Advanced.UseOptimisticConcurrency;
             String key = "";
 

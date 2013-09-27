@@ -49,7 +49,6 @@ namespace FingerSpelling.View
         private HandDataSourceSettings handDetectionSettings = new HandDataSourceSettings();
         private SpeechSynthesizerHandler speechSynthesizer = new SpeechSynthesizerHandler();
         private bool textToSpeachEnabled = false;
-        private bool recordGesture = false;
         private bool isCalibrated;
 
         private Context context;                            // The OpenNI context used for most OpenNI-related operations
@@ -58,7 +57,6 @@ namespace FingerSpelling.View
         private readonly String xmlPath = "Resources/OpenNI-config.xml";
 
         private Graphics g;
-        private EmbeddableDocumentStore database;
         private HandData handData;
 
         private CalibrationForm calibrationForm;
@@ -78,12 +76,12 @@ namespace FingerSpelling.View
             Cursor.Current = Cursors.Default;
             this.videoControl.ClearLayers();
             this.fpsWatch = new Stopwatch();
+
             g = this.shapeBox.CreateGraphics();
 
-            //database = DataPersister.initializeDB();
-            database = RavenDBEmbedded.getRavenDBInstance.getDBInstance();
+            DataPersister.initializeDB();
 
-            gestureDetector = GestureDetector.getGestureDetector;
+            gestureDetector = GestureDetector.GetGestureDetector;
 
             // Initialize the context from the configuration file
             //this.context = new Context(@"config.xml");
@@ -109,7 +107,9 @@ namespace FingerSpelling.View
             dispatcherTimer.Tick += new EventHandler(dispatcherTimer_Tick);
             dispatcherTimer.Interval = new TimeSpan(0, 0, 0, 0, 10);
             //dispatcherTimer.Start();
-            Console.WriteLine("Finished loading app.");
+            notifyIcon.Visible = true;
+            notifyIcon.ShowBalloonTip(1000);
+            //Console.WriteLine("Finished loading app.");
 
         }
 
@@ -151,6 +151,7 @@ namespace FingerSpelling.View
         {
             this.Clear();
             this.removeEventHandlers();
+            this.gestureDetector.Clear();
 
             if (this.dataSourceFactory != null)
             {
@@ -178,7 +179,6 @@ namespace FingerSpelling.View
 
         private void Clear()
         {
-            //Console.WriteLine("ACTIVE SOURCES " + this.activeDataSources.Count);
             speechSynthesizer.stopVoice();
             foreach (var dataSource in this.activeDataSources)
             {
@@ -204,7 +204,9 @@ namespace FingerSpelling.View
         private void removeEventHandlers()
         {
             this.gestureDetector.handFoundEventHandler -= gestureDetector_handFoundEventHandler;
-
+            this.gestureDetector.calibrationEventHandler -= gestureDetector_calibrationEventHandler;
+            this.gestureDetector.toCloseEventHandler -= gestureDetector_toCloseEventHandler;
+            this.gestureDetector.gestureFoundEventHandler -= gestureDetector_gestureFoundEventHandler;
         }
 
         private void SetHandDataSource(IHandDataSource dataSource, bool overrideSource)
@@ -241,6 +243,7 @@ namespace FingerSpelling.View
         {
             this.Clear();
             this.removeEventHandlers();
+            this.gestureDetector.Clear();
 
             if (this.dataSourceFactory != null)
             {
@@ -261,7 +264,6 @@ namespace FingerSpelling.View
         // the TextBox control, the Text property is set directly.  
         private void addText(String text, Control control)
         {
-            //System.Threading.Thread.Sleep(500);
             if (control.InvokeRequired)
             {
                 var d = new SetTextCallback(addText);
@@ -289,10 +291,12 @@ namespace FingerSpelling.View
                 var handDataSource = new HandDataSource(this.dataSourceFactory.CreateShapeDataSource(this.clusteringSettings, this.shapeSettings), this.handDetectionSettings);
                 this.SetHandDataSource(handDataSource, false);
 
-                gestureDetector.startDetecting(handDataSource, this.radioButtonLefty.Checked, this.radioButtonRighty.Checked, this.radioButtonSpeech.Checked, this.radioButtonText.Checked);
+                gestureDetector.StartDetecting(handDataSource, this.radioButtonLefty.Checked, this.radioButtonRighty.Checked, this.speechCheckBox.Checked, (int)this.detectionRateField.Value);
                 gestureDetector.calibrationEventHandler += gestureDetector_calibrationEventHandler;
                 gestureDetector.toCloseEventHandler += gestureDetector_toCloseEventHandler;
+                gestureDetector.gestureFoundEventHandler += gestureDetector_gestureFoundEventHandler;
                 gestureDetector.handFoundEventHandler += new HandFoundEventHandler(gestureDetector_handFoundEventHandler);
+                gestureDetector.noHandFoundEventHandler += gestureDetector_noHandFoundEventHandler;
             }
 
             //fpsWatch.Start();
@@ -302,13 +306,29 @@ namespace FingerSpelling.View
                 calibrationForm = new CalibrationForm();
                 calibrationForm.ShowDialog();
                 //Cursor.Current = Cursors.WaitCursor;
-                this.UseWaitCursor = true;
+                //this.UseWaitCursor = true;
             }
+        }
+
+        private void gestureDetector_noHandFoundEventHandler(object sender, NoHandFoundEvent e)
+        {
+            this.addText("", this.volumeTextField);
+            this.addText("", this.palmPointBox);
+            this.addText("", this.centerPointBox);
+            this.addText("", this.fingerPointTextField);
+            this.addText("", this.pointsTextBox);
+            this.addText("-", this.detectionRateField);
+        }
+
+        void gestureDetector_gestureFoundEventHandler(object sender, GestureFoundEvent e)
+        {
+            this.addText(e.gesture.gestureName, this.detectedValueField);
+            Speak(e.gesture.gestureName);
         }
 
         void gestureDetector_toCloseEventHandler(object sender, ToCloseEvent e)
         {
-            MessageBox.Show("Your hand is to close for detection", "To Close Error", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            //MessageBox.Show("Your hand is to close for detection", "To Close Error", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
         void gestureDetector_calibrationEventHandler(object sender, CalibrationEvent e)
@@ -324,7 +344,8 @@ namespace FingerSpelling.View
                 this.startButton.Enabled = false;
                 calibrationForm.Close();
                 //Cursor.Current = Cursors.Default;
-                this.UseWaitCursor = false;
+                //this.UseWaitCursor = false;
+                gestureDetector.calibrationEventHandler -= gestureDetector_calibrationEventHandler;
             }
         }
 
@@ -343,33 +364,23 @@ namespace FingerSpelling.View
                              handData.Volume.Depth, this.volumeTextField);
 
                 this.addText(handData.Contour.Points.Count.ToString(), this.pointsTextBox);
+                this.addText(handData.PalmPoint.ToString(), this.palmPointBox);
+                this.addText(handData.Location.ToString(), this.centerPointBox);
 
                 if (handData.HasFingers)
                 {
                     this.addText(handData.FingerPoints.Count.ToString(), this.fingerPointTextField);
                 }
-                else
-                {
-                    this.addText("", this.fingerPointTextField);
-                }
                 //g.DrawPolygon(new Pen(Color.White, 2), MathHelper.convertToDrawablePointList(handData).ToArray());
-
             }
-            else
-            {
-                this.addText("", this.volumeTextField);
-                //this.addText("", this.fingerPointTextField);
-            }
-
         }
 
-        private void generateOutput(String gesture)
+        private void Speak(String word)
         {
-            //this.addText(gesture, this.textBox);
             if (this.textToSpeachEnabled)
             {
                 speechSynthesizer.stopVoice();
-                speechSynthesizer.textToSpeech(gesture, -4, 100);
+                speechSynthesizer.textToSpeech(word, -4, 100);
             }
             else
             {
@@ -384,6 +395,7 @@ namespace FingerSpelling.View
             if (radioButtonRGB.Checked && this.initializationDone)
             {
                 //this.videoControl.Invalidate();
+                this.gestureDetector.Clear();
                 this.SetImageDataSource(this.dataSourceFactory.CreateRGBBitmapDataSource());
                 this.startButton.Enabled = true;
             }
@@ -393,16 +405,6 @@ namespace FingerSpelling.View
                 this.SetImageDataSource(this.dataSourceFactory.CreateDepthBitmapDataSource());
                 this.startButton.Enabled = true;
             }
-        }
-
-        private void radioButtonText_Click(object sender, EventArgs e)
-        {
-            this.textToSpeachEnabled = false;
-        }
-
-        private void radioButtonSpeech_Click(object sender, EventArgs e)
-        {
-            this.textToSpeachEnabled = true;
         }
 
 
@@ -417,6 +419,7 @@ namespace FingerSpelling.View
             {
                 case Keys.Escape:
                     this.Clear();
+                    this.gestureDetector.Clear();
                     this.removeEventHandlers();
 
                     if (this.dataSourceFactory != null)
@@ -427,8 +430,8 @@ namespace FingerSpelling.View
                     break;
 
                 case Keys.Space:
-                    gestureDetector = GestureDetector.getGestureDetector;
-                    bool success = gestureDetector.recordGesture(gestureName.Text);
+                    gestureDetector = GestureDetector.GetGestureDetector;
+                    bool success = gestureDetector.RecordGesture(gestureName.Text);
 
                     if (!success)
                     {
@@ -436,9 +439,7 @@ namespace FingerSpelling.View
                                         MessageBoxIcon.Error);
                     }
                     break;
-
             }
-
         }
 
         private void fingeralphabetButton_Click(object sender, EventArgs e)
@@ -448,13 +449,13 @@ namespace FingerSpelling.View
 
         private void recordButton_Click(object sender, EventArgs e)
         {
-            gestureDetector = GestureDetector.getGestureDetector;
+            gestureDetector = GestureDetector.GetGestureDetector;
 
             if (!String.IsNullOrWhiteSpace(gestureName.Text))
             {
-                bool success = gestureDetector.recordGesture(gestureName.Text);
+                bool success = gestureDetector.RecordGesture(gestureName.Text);
 
-                String key = DataPersister.saveToDB(database, new Gesture(gestureName.Text, this.handData));
+                String key = DataPersister.saveToDB(new Gesture(gestureName.Text, this.handData));
 
                 if (String.IsNullOrEmpty(key))
                 {
@@ -480,30 +481,19 @@ namespace FingerSpelling.View
                 //MessageBox.Show(g.hand.Contour.Count.ToString());
                 //stream.Close();
 
-                Gesture returnedGesture = DataPersister.readFromDB(database, "gestures/" + gestureName.Text);
-                MessageBox.Show("GESTURE "+returnedGesture.gestureName+", "+returnedGesture.center+", "+returnedGesture.fingerCount+", "+returnedGesture.volumeHeight);
+                Gesture returnedGesture = DataPersister.readFromDB("gestures/" + gestureName.Text);
+                MessageBox.Show("GESTURE " + returnedGesture.gestureName + ", " + returnedGesture.center + ", " + returnedGesture.fingerCount + ", " + returnedGesture.volumeHeight);
             }
 
         }
 
-        private void recordButton_MouseDown(object sender, MouseEventArgs e)
-        {
-            recordGesture = true;
-        }
-
-        private void recordButton_MouseUp(object sender, MouseEventArgs e)
-        {
-            recordGesture = false;
-            gestureName.Text = "";
-        }
-
         private void exportGestureButton_Click(object sender, EventArgs e)
         {
-            gestureDetector = GestureDetector.getGestureDetector;
+            gestureDetector = GestureDetector.GetGestureDetector;
 
             if (!String.IsNullOrWhiteSpace(gestureName.Text))
             {
-                bool success = gestureDetector.recordGesture(gestureName.Text);
+                bool success = gestureDetector.RecordGesture(gestureName.Text);
 
                 if (success)
                 {
@@ -514,5 +504,31 @@ namespace FingerSpelling.View
             }
         }
 
+        private void notifyIcon_Click(object sender, EventArgs e)
+        {
+            notifyIcon.Visible = false;
+        }
+
+        private void detectionRateField_ValueChanged(object sender, EventArgs e)
+        {
+            var detectionRate = sender as NumericUpDown;
+
+            gestureDetector = GestureDetector.GetGestureDetector;
+            gestureDetector.SetDetectionRate((int)detectionRate.Value);
+        }
+
+        private void speechCheckBox_CheckedChanged(object sender, EventArgs e)
+        {
+            var speechCheckbox = sender as CheckBox;
+
+            if (speechCheckbox != null && speechCheckbox.Checked)
+            {
+                this.textToSpeachEnabled = true;
+            }
+            else
+            {
+                this.textToSpeachEnabled = false;
+            }
+        }
     }
 }

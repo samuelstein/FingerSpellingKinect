@@ -22,7 +22,7 @@ namespace FingerSpelling.Gestures
 
         public Gesture()
         {
-            this.gestureName = "empty";
+            this.gestureName = "-";
         }
 
 
@@ -32,7 +32,15 @@ namespace FingerSpelling.Gestures
             this.contourPoints = handData.Contour.Points;
             this.center = handData.Location;
             this.convexHull = handData.ConvexHull;
-            this.fingerCount = handData.FingerCount;
+            if (handData.HasFingers)
+            {
+                this.fingerCount = handData.FingerCount;
+            }
+            else
+            {
+                this.fingerCount = 0;
+            }
+
             this.palmPoint = handData.PalmPoint;
             this.volumeDepth = handData.Volume.Depth;
             this.volumeHeight = handData.Volume.Height;
