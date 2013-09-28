@@ -24,7 +24,7 @@ using Raven.Client.Embedded;
 
 namespace FingerSpelling.View
 {
-    public partial class AppForm : Form
+    public partial class MainForm : Form
     {
         private IList<IDataSource> activeDataSources;
         private IDataSourceFactory dataSourceFactory;
@@ -35,10 +35,6 @@ namespace FingerSpelling.View
         private ScriptNode scriptNode;
 
         private Boolean initializationDone = false;
-
-        // This BackgroundWorker is used to demonstrate the  
-        // preferred way of performing asynchronous operations. 
-        //private BackgroundWorker setTextWorker;
 
         // This delegate enables asynchronous calls for setting 
         // the text property on a TextBox control. 
@@ -58,11 +54,12 @@ namespace FingerSpelling.View
 
         private Graphics g;
         private HandData handData;
+        private BackgroundWorker dbWorker;
 
         private CalibrationForm calibrationForm;
         private Stopwatch fpsWatch;
 
-        public AppForm()
+        public MainForm()
         {
             InitializeComponent();
         }
@@ -77,9 +74,18 @@ namespace FingerSpelling.View
             this.videoControl.ClearLayers();
             this.fpsWatch = new Stopwatch();
 
+            //this.exportGestureButton.Enabled = false;
+            //this.recordButton.Enabled = false;
+
             g = this.shapeBox.CreateGraphics();
 
-            DataPersister.initializeDB();
+            DataPersister.InitializeDb();
+
+            dbWorker = new BackgroundWorker();
+            dbWorker.WorkerReportsProgress = false;
+            dbWorker.WorkerSupportsCancellation = true;
+            dbWorker.DoWork += DbWorkerDoWork;
+            dbWorker.RunWorkerCompleted += DbWorkerRunWorkerCompleted;
 
             gestureDetector = GestureDetector.GetGestureDetector;
 
@@ -108,8 +114,50 @@ namespace FingerSpelling.View
             dispatcherTimer.Interval = new TimeSpan(0, 0, 0, 0, 10);
             //dispatcherTimer.Start();
             notifyIcon.Visible = true;
-            notifyIcon.ShowBalloonTip(1000);
+            notifyIcon.ShowBalloonTip(10000);
             //Console.WriteLine("Finished loading app.");
+
+        }
+
+        void DbWorkerRunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
+        {
+            if ((e.Error != null) || (e.Cancelled == true))
+            {
+                MessageBox.Show("Could not store data into database", "Database Connection Error", MessageBoxButtons.OK,
+                                MessageBoxIcon.Error);
+            }
+            else
+            {
+                String result = (string)e.Result;
+
+                gestureDetector = GestureDetector.GetGestureDetector;
+                gestureDetector.InitializeBackgroundWorker();
+
+                if (String.IsNullOrEmpty(result))
+                {
+                    MessageBox.Show("Could not store data into database", "Database Connection Error", MessageBoxButtons.OK,
+                               MessageBoxIcon.Error);
+                }
+            }
+        }
+
+        void DbWorkerDoWork(object sender, DoWorkEventArgs e)
+        {
+            BackgroundWorker worker = sender as BackgroundWorker;
+
+            if ((worker.CancellationPending == true))
+            {
+                e.Cancel = true;
+                //break;
+            }
+            else
+            {
+                Gesture recordedGesture = (Gesture)e.Argument;
+
+                String key = DataPersister.SaveToDb(recordedGesture);
+
+                e.Result = key;
+            }
 
         }
 
@@ -179,7 +227,7 @@ namespace FingerSpelling.View
 
         private void Clear()
         {
-            speechSynthesizer.stopVoice();
+            speechSynthesizer.StopVoice();
             foreach (var dataSource in this.activeDataSources)
             {
                 dataSource.Stop();
@@ -193,11 +241,13 @@ namespace FingerSpelling.View
 
         private void startButton_Click(object sender, EventArgs e)
         {
+            //this.exportGestureButton.Enabled = true;
+            //this.recordButton.Enabled = true;
             this.startButton.Enabled = false;
 
             if (this.initializationDone)
             {
-                startHandTracking();
+                StartHandTracking();
             }
         }
 
@@ -207,6 +257,11 @@ namespace FingerSpelling.View
             this.gestureDetector.calibrationEventHandler -= gestureDetector_calibrationEventHandler;
             this.gestureDetector.toCloseEventHandler -= gestureDetector_toCloseEventHandler;
             this.gestureDetector.gestureFoundEventHandler -= gestureDetector_gestureFoundEventHandler;
+
+            if (dbWorker != null && dbWorker.WorkerSupportsCancellation == true)
+            {
+                dbWorker.CancelAsync();
+            }
         }
 
         private void SetHandDataSource(IHandDataSource dataSource, bool overrideSource)
@@ -252,6 +307,13 @@ namespace FingerSpelling.View
             this.Close();
         }
 
+        protected override void OnHelpButtonClicked(CancelEventArgs e)
+        {
+            e.Cancel = true;
+            base.OnHelpButtonClicked(e);
+            MessageBox.Show("Help goes here.");
+        }
+
         // This method demonstrates a pattern for making thread-safe 
         // calls on a Windows Forms control.  
         // 
@@ -262,11 +324,11 @@ namespace FingerSpelling.View
         // 
         // If the calling thread is the same as the thread that created 
         // the TextBox control, the Text property is set directly.  
-        private void addText(String text, Control control)
+        private void AddText(String text, Control control)
         {
             if (control.InvokeRequired)
             {
-                var d = new SetTextCallback(addText);
+                var d = new SetTextCallback(AddText);
                 this.Invoke(d, new object[] { text, control });
             }
             else
@@ -283,7 +345,7 @@ namespace FingerSpelling.View
             }
         }
 
-        private void startHandTracking()
+        private void StartHandTracking()
         {
             if (this.initializationDone)
             {
@@ -312,17 +374,17 @@ namespace FingerSpelling.View
 
         private void gestureDetector_noHandFoundEventHandler(object sender, NoHandFoundEvent e)
         {
-            this.addText("", this.volumeTextField);
-            this.addText("", this.palmPointBox);
-            this.addText("", this.centerPointBox);
-            this.addText("", this.fingerPointTextField);
-            this.addText("", this.pointsTextBox);
-            this.addText("-", this.detectionRateField);
+            this.AddText("-", this.volumeTextField);
+            this.AddText("-", this.palmPointBox);
+            this.AddText("-", this.centerPointBox);
+            this.AddText("-", this.fingerPointTextField);
+            this.AddText("-", this.pointsTextBox);
+            this.AddText("-", this.detectedValueField);
         }
 
         void gestureDetector_gestureFoundEventHandler(object sender, GestureFoundEvent e)
         {
-            this.addText(e.gesture.gestureName, this.detectedValueField);
+            this.AddText(e.gesture.gestureName, this.detectedValueField);
             Speak(e.gesture.gestureName);
         }
 
@@ -360,16 +422,16 @@ namespace FingerSpelling.View
 
             if (handData != null && isCalibrated)
             {
-                this.addText("W: " + handData.Volume.Width + " H: " + handData.Volume.Height + " D: " +
+                this.AddText("W: " + handData.Volume.Width + " H: " + handData.Volume.Height + " D: " +
                              handData.Volume.Depth, this.volumeTextField);
 
-                this.addText(handData.Contour.Points.Count.ToString(), this.pointsTextBox);
-                this.addText(handData.PalmPoint.ToString(), this.palmPointBox);
-                this.addText(handData.Location.ToString(), this.centerPointBox);
+                this.AddText(handData.Contour.Points.Count.ToString(), this.pointsTextBox);
+                this.AddText(handData.PalmPoint.ToString(), this.palmPointBox);
+                this.AddText(handData.Location.ToString(), this.centerPointBox);
 
                 if (handData.HasFingers)
                 {
-                    this.addText(handData.FingerPoints.Count.ToString(), this.fingerPointTextField);
+                    this.AddText(handData.FingerPoints.Count.ToString(), this.fingerPointTextField);
                 }
                 //g.DrawPolygon(new Pen(Color.White, 2), MathHelper.convertToDrawablePointList(handData).ToArray());
             }
@@ -379,18 +441,21 @@ namespace FingerSpelling.View
         {
             if (this.textToSpeachEnabled)
             {
-                speechSynthesizer.stopVoice();
-                speechSynthesizer.textToSpeech(word, -4, 100);
+                speechSynthesizer.StopVoice();
+                speechSynthesizer.TextToSpeech(word, -4, 100);
             }
             else
             {
-                speechSynthesizer.stopVoice();
+                speechSynthesizer.StopVoice();
             }
         }
 
-        private void radioButtons_CheckedChanged(object sender, EventArgs e)
+        private void imageMode_CheckedChanged(object sender, EventArgs e)
         {
             var radioButton = sender as RadioButton;
+
+            //this.exportGestureButton.Enabled = false;
+            //this.recordButton.Enabled = false;
 
             if (radioButtonRGB.Checked && this.initializationDone)
             {
@@ -453,15 +518,15 @@ namespace FingerSpelling.View
 
             if (!String.IsNullOrWhiteSpace(gestureName.Text))
             {
-                bool success = gestureDetector.RecordGesture(gestureName.Text);
-
-                String key = DataPersister.saveToDB(new Gesture(gestureName.Text, this.handData));
-
-                if (String.IsNullOrEmpty(key))
+                if (dbWorker.IsBusy != true)
                 {
-                    MessageBox.Show("Could not store Gesture", "Gesture Store Error", MessageBoxButtons.OK,
-                                    MessageBoxIcon.Error);
+                    dbWorker.RunWorkerAsync(new Gesture(gestureName.Text.ToLower(), this.handData));
                 }
+            }
+            else
+            {
+                MessageBox.Show("Please insert a name.", "Gesture Store Error", MessageBoxButtons.OK,
+                                        MessageBoxIcon.Error);
             }
 
         }
@@ -470,19 +535,13 @@ namespace FingerSpelling.View
         {
             if (gestureName.Text != "")
             {
-                //Open the file written above and read values from it.
-                //Console.WriteLine("Resources/Gestures/" + gestureName.Text + ".dat");
-                //Stream stream = File.Open(@"Resources/Gestures/" + gestureName.Text + ".dat", FileMode.Open);
-                //BinaryFormatter bformatter = new BinaryFormatter();
-                //bformatter = new BinaryFormatter();
-
-                //Console.WriteLine("Reading Gesture");
-                //Gesture g = (Gesture)bformatter.Deserialize(stream);
-                //MessageBox.Show(g.hand.Contour.Count.ToString());
-                //stream.Close();
-
-                Gesture returnedGesture = DataPersister.readFromDB("gestures/" + gestureName.Text);
-                MessageBox.Show("GESTURE " + returnedGesture.gestureName + ", " + returnedGesture.center + ", " + returnedGesture.fingerCount + ", " + returnedGesture.volumeHeight);
+                Gesture returnedGesture = DataPersister.ReadFromDb("gestures/" + gestureName.Text);
+                MessageBox.Show("GESTURE " + returnedGesture.gestureName + ", " + returnedGesture.center + ", " + returnedGesture.fingerCount + ", " + returnedGesture.contourPoints);
+            }
+            else
+            {
+                MessageBox.Show("Please insert a name.", "Gesture Read Error", MessageBoxButtons.OK,
+                                        MessageBoxIcon.Error);
             }
 
         }
@@ -493,14 +552,20 @@ namespace FingerSpelling.View
 
             if (!String.IsNullOrWhiteSpace(gestureName.Text))
             {
-                bool success = gestureDetector.RecordGesture(gestureName.Text);
+                //bool success = gestureDetector.RecordGesture(gestureName.Text);
+                bool success = DataPersister.SaveToFile("XML", gestureName.Text.ToLower(), FileMode.Create, FileAccess.Write, new Gesture(gestureName.Text.ToLower(), handData));
 
-                if (success)
+                if (!success)
                 {
                     MessageBox.Show("Could not export Gesture", "Gesture Export Error", MessageBoxButtons.OK,
                                    MessageBoxIcon.Error);
 
                 }
+            }
+            else
+            {
+                MessageBox.Show("Please insert a name.", "Gesture Store Error", MessageBoxButtons.OK,
+                                        MessageBoxIcon.Error);
             }
         }
 

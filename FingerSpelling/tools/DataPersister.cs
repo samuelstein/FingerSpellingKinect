@@ -1,21 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Data;
 using System.IO;
 using System.Linq;
 using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
-using System.Runtime.Serialization.Json;
-using System.Text;
-using System.Threading.Tasks;
+using System.Windows.Forms;
 using System.Xml;
 using System.Xml.Serialization;
 using FingerSpelling.Gestures;
-using Microsoft.Win32.SafeHandles;
 using Raven.Abstractions.Exceptions;
 using Raven.Client;
 using Raven.Client.Embedded;
-using Raven.Json.Linq;
 
 namespace FingerSpelling.tools
 {
@@ -24,22 +19,22 @@ namespace FingerSpelling.tools
         private static readonly String directory = "Resources/Export/Gestures/";
         private static EmbeddableDocumentStore database;
 
-        public static bool saveToFile(String fileType, String fileName, FileMode fileMode, FileAccess fileAccess, Gesture persistObject)
+        public static bool SaveToFile(String fileType, String fileName, FileMode fileMode, FileAccess fileAccess, Gesture persistObject)
         {
             try
             {
                 switch (fileType)
                 {
                     case "XML":
-                        writeXML(fileType, fileName, fileMode, fileAccess, persistObject);
+                        WriteXml(fileType, fileName, fileMode, fileAccess, persistObject);
                         break;
 
                     case "STRICTXML":
-                        writeStrictXML(fileType, fileName, fileMode, fileAccess, persistObject);
+                        WriteStrictXml(fileType, fileName, fileMode, fileAccess, persistObject);
                         break;
 
                     case "BINARY":
-                        writeBinary(fileType, fileName, fileMode, fileAccess, persistObject);
+                        WriteBinary(fileType, fileName, fileMode, fileAccess, persistObject);
                         break;
                 }
             }
@@ -52,7 +47,7 @@ namespace FingerSpelling.tools
             return true;
 
         }
-        private static void writeBinary(String fileType, String fileName, FileMode fileMode, FileAccess fileAccess, Gesture persistObject)
+        private static void WriteBinary(String fileType, String fileName, FileMode fileMode, FileAccess fileAccess, Gesture persistObject)
         {
             FileStream stream = new FileStream(@"" + directory + fileName + ".dat", FileMode.Create);
             XmlDictionaryWriter binaryDictionaryWriter = XmlDictionaryWriter.CreateBinaryWriter(stream);
@@ -63,7 +58,7 @@ namespace FingerSpelling.tools
             binaryDictionaryWriter.Close();
         }
 
-        private static void writeStrictXML(String fileType, String fileName, FileMode fileMode, FileAccess fileAccess, Gesture persistObject)
+        private static void WriteStrictXml(String fileType, String fileName, FileMode fileMode, FileAccess fileAccess, Gesture persistObject)
         {
             XmlSerializer x = new XmlSerializer(persistObject.GetType());
             StreamWriter writer = new StreamWriter(@"" + directory + fileName + ".xml");
@@ -72,7 +67,7 @@ namespace FingerSpelling.tools
             writer.Close();
         }
 
-        private static void writeXML(String fileType, String fileName, FileMode fileMode, FileAccess fileAccess, Gesture persistObject)
+        private static void WriteXml(String fileType, String fileName, FileMode fileMode, FileAccess fileAccess, Gesture persistObject)
         {
             FileStream writer = new FileStream(@"" + directory + fileName + ".xml", FileMode.Create,
                                                 FileAccess.Write);
@@ -81,34 +76,30 @@ namespace FingerSpelling.tools
             writer.Close();
         }
 
-        public static void readFile()
+        public static void ReadFile(String fileName)
         {
-            //TODO:
+            //Open the file written above and read values from it.
+            Console.WriteLine("Resources/Gestures/" + fileName + ".dat");
+            Stream stream = File.Open(@"Resources/Gestures/" + fileName + ".dat", FileMode.Open);
+            BinaryFormatter bformatter = new BinaryFormatter();
+            bformatter = new BinaryFormatter();
+
+            Console.WriteLine("Reading Gesture");
+            Gesture g = (Gesture)bformatter.Deserialize(stream);
+            MessageBox.Show(g.contourPoints.ToString());
+            stream.Close();
         }
 
-        //public static EmbeddableDocumentStore initializeDB()
-        //{
-        //    //Connect to DB
-        //    var documentStore = new EmbeddableDocumentStore { DataDirectory = @"Resources/DB" };
-        //    documentStore.Initialize();
-        //    //generate a custom Id
-        //    documentStore.Conventions.RegisterIdConvention<Gesture>((dbname, commands, gesture) => "gestures/" + gesture.gestureName);
-
-        //    return documentStore;
-        //}
-
-        public static void initializeDB()
+        public static void InitializeDb()
         {
             database = RavenDBEmbedded.getRavenDBInstance.getDBInstance();
         }
 
-        public static String saveToDB(Gesture gesture)
+        public static String SaveToDb(Gesture gesture)
         {
             IDocumentSession session = database.OpenSession();
             var previousSetting = session.Advanced.UseOptimisticConcurrency;
             String key = "";
-
-            //var constraint = new UniqueConstraint { Type = typeof(T).Name, Key = key };
 
             try
             {
@@ -134,7 +125,7 @@ namespace FingerSpelling.tools
             return key;
         }
 
-        public static Gesture readFromDB(String key)
+        public static Gesture ReadFromDb(String key)
         {
             IDocumentSession session = database.OpenSession();
             return session.Load<Gesture>(key);
@@ -147,7 +138,7 @@ namespace FingerSpelling.tools
             return session.Query<Gesture>().Where(gesture => gesture.fingerCount == actualGesture.fingerCount).ToList();
         }
 
-        public static List<Gesture> fetchAll()
+        public static List<Gesture> FetchAll()
         {
             IDocumentSession session = database.OpenSession();
 
@@ -155,13 +146,11 @@ namespace FingerSpelling.tools
         }
 
 
-        public static String saveToDB(string json)
+        public static String SaveToDb(string json)
         {
             IDocumentSession session = database.OpenSession();
             var previousSetting = session.Advanced.UseOptimisticConcurrency;
             String key = "";
-
-            //var constraint = new UniqueConstraint { Type = typeof(T).Name, Key = key };
 
             try
             {

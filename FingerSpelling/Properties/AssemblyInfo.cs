@@ -6,11 +6,11 @@ using System.Resources;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("FingerSpelling")]
-[assembly: AssemblyDescription("")]
+[assembly: AssemblyTitle("Finger Spelling App")]
+[assembly: AssemblyDescription("This Windows Application allows you to recognize sign language symbols with the Microsoft Kinect for Windows.")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("FingerSpelling")]
+[assembly: AssemblyCompany("www.samuelstein.de")]
+[assembly: AssemblyProduct("Finger Spelling App")]
 [assembly: AssemblyCopyright("Copyright ©  2013 Samuel Stein")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]

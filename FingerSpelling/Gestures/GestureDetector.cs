@@ -41,6 +41,7 @@ namespace FingerSpelling.Gestures
 
         private System.Timers.Timer detectionTimer = new System.Timers.Timer();
 
+        //thread safty??
         private List<Gesture> allGestures;
         private BackgroundWorker backgroundWorker;
 
@@ -71,10 +72,17 @@ namespace FingerSpelling.Gestures
             InitializeBackgroundWorker();
         }
 
-        private void InitializeBackgroundWorker()
+        public void InitializeBackgroundWorker()
         {
 
+            if (detectionTimer != null)
+            {
+                detectionTimer.Stop();
+            }
+
             backgroundWorker = new BackgroundWorker();
+            backgroundWorker.WorkerReportsProgress = false;
+            backgroundWorker.WorkerSupportsCancellation = true;
             // Start the asynchronous operation.
             backgroundWorker.RunWorkerAsync();
 
@@ -91,9 +99,9 @@ namespace FingerSpelling.Gestures
         private void backgroundWorker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
         {
             // First, handle the case where an exception was thrown.
-            if (e.Error != null)
+            if ((e.Error != null) || (e.Cancelled == true))
             {
-                MessageBox.Show(e.Error.Message);
+                MessageBox.Show("Could not read data from database", "Database Connection Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
             else
             {
@@ -107,52 +115,86 @@ namespace FingerSpelling.Gestures
 
         private void backgroundWorker_DoWork(object sender, DoWorkEventArgs e)
         {
-            allGestures = DataPersister.fetchAll();
+            BackgroundWorker worker = sender as BackgroundWorker;
+
+            if ((worker.CancellationPending == true))
+            {
+                e.Cancel = true;
+                //break;
+            }
+            else
+            {
+                allGestures = DataPersister.FetchAll();
+            }
+        }
+
+        private void ResetRestartTimer(System.Timers.Timer timer, int interval)
+        {
+            timer.Stop();
+            timer.Interval = interval;
+            timer.Start();
         }
 
         private void RunEvent(object sender, ElapsedEventArgs e)
         {
+            HandData recordedHand = this.actualHand;
 
-            int threshold = 180;//200; //percent
+            int threshold = 40;//180;//200; //percent
             Gesture identified = new Gesture();
 
-            Console.WriteLine("detection in progress");
+            Console.WriteLine("detection in progress. interval: " + detectionRate);
 
-            if (actualHand != null)
+            if (recordedHand != null && allGestures != null)
             {
-                identified = new Gesture("-", actualHand);
-                //List<Gesture> resultList = DataPersister.searchMatchingGesture(new Gesture("", actualHand));
-                List<Gesture> resultList = (from gesture in allGestures where gesture.fingerCount == actualHand.FingerCount select gesture).ToList();
+                //identified = new Gesture("-", recordedHand);
+                List<Gesture> resultList = (from gesture in allGestures where gesture.fingerCount == recordedHand.FingerCount select gesture).ToList();
 
                 Dictionary<Gesture, double> hausdorffDistancesGestures = new Dictionary<Gesture, double>();
 
+                List<Point> recordedTranslatedHandPoints = MathHelper.TranslateToOrigin((List<Point>)recordedHand.Contour.Points,
+                                                                    recordedHand.Location);
+
                 foreach (var gesture in resultList)
                 {
-                    Console.WriteLine("possible gesture from db: " + gesture.gestureName);
-                    hausdorffDistancesGestures.Add(gesture, MathHelper.calculateHausdorffDistance((List<Point>)actualHand.Contour.Points,
-                                                                    (List<Point>)gesture.contourPoints));
+                    //translate to origin + calculate hausdorff distance
+                    List<Point> translatedPoints = MathHelper.TranslateToOrigin((List<Point>)gesture.contourPoints, gesture.center);
+
+                    double hausdorffDistance = MathHelper.CalculateHausdorffDistance(recordedTranslatedHandPoints,
+                                                                                     translatedPoints);
+
+                    hausdorffDistancesGestures.Add(gesture, hausdorffDistance);
+
+                    Console.WriteLine("possible gestures: " + gesture.gestureName + ", h: " + hausdorffDistance);
                 }
 
                 if (hausdorffDistancesGestures.Count > 0)
                 {
-                    // Order by values.
-                    // ... Use LINQ to specify sorting by value.
-                    var mostMatchingGesture = from pair in hausdorffDistancesGestures
-                                              orderby pair.Value descending
-                                              select pair;
+                    // Order by values. Use LINQ to specify sorting by value.
+                    var mostMatchingGestures = from pair in hausdorffDistancesGestures
+                                               orderby pair.Value ascending
+                                               select pair;
 
-                    Console.WriteLine("SMALLEST HAUSDORFF DISTANCE " + mostMatchingGesture.First().Value);
-
-                    if (threshold >= mostMatchingGesture.First().Value)
+                    foreach (KeyValuePair<Gesture, double> keyValuePair in mostMatchingGestures)
                     {
-                        identified = mostMatchingGesture.First().Key;
+                        Console.WriteLine(keyValuePair.Key + " - " + keyValuePair.Value);
                     }
-                    if (gestureFoundEventHandler != null)
+
+                    Console.WriteLine("SMALLEST HAUSDORFF DISTANCE: " + mostMatchingGestures.First().Value);
+
+                    if (threshold >= mostMatchingGestures.First().Value)
                     {
-                        gestureFoundEventHandler(this, new GestureFoundEvent(identified));
+                        identified = mostMatchingGestures.First().Key;
+
+                        if (gestureFoundEventHandler != null)
+                        {
+                            Console.WriteLine("\nGESTURE DETECTED: " + identified.gestureName + "\n");
+                            gestureFoundEventHandler(this, new GestureFoundEvent(identified));
+                        }
                     }
                 }
             }
+
+            ResetRestartTimer(detectionTimer, detectionRate);
         }
 
         public void SetDetectionRate(int rate)
@@ -209,53 +251,6 @@ namespace FingerSpelling.Gestures
                 }
             }
 
-            //for (var index = 0; index < handData.Count; index++)
-            //{
-            //    HandData hand = handData.Hands[index];
-            //    //this.addText(index+ " Hand(s).\nFingers: "+hand.FingerCount);
-            //    //this.addText(string.Format("Fingers on hand {0}: {1}", index, hand.FingerCount));
-            //    //this.addText("Palm Center: " + hand.PalmPoint);
-            //    //Console.WriteLine("Hand location "+hand.Location);
-            //}
-
-            //if (righty)
-            //{
-            //    if (handData.Count == 1)
-            //    {
-            //        HandData hand = handData.Hands.First();
-            //        //GestureFoundEvent gestureFoundEvent;
-            //        Gesture gesture = new Gesture();
-
-            //        switch (hand.FingerCount)
-            //        {
-            //            case 5:
-            //                //generateOutput("key five");
-            //                //gestureFoundEvent = new GestureFoundEvent(hand, getTimestamp());
-            //                if (gestureFoundEventHandler != null)
-            //                {
-            //                    //gesture= new Gesture("test", hand);
-            //                    gestureFoundEventHandler(this, new GestureFoundEvent(gesture));
-
-            //                }
-            //                break;
-            //            case 4:
-            //                if (gestureFoundEventHandler != null)
-            //                {
-            //                    //gesture = new Gesture("test", hand);
-            //                    gestureFoundEventHandler(this, new GestureFoundEvent(gesture));
-
-            //                }
-
-            //                //generateOutput("key four");
-            //                break;
-            //            default:
-
-            //                //generateOutput("no key detected");
-            //                break;
-            //        }
-            //    }
-            //    if (handData.Count == 2)
-            //    {
             //        var leftHand = handData.Hands.OrderBy(h => h.Location.X).First();
             //        var rightHand = handData.Hands.OrderBy(h => h.Location.X).Last();
             //        if (leftHand.FingerCount == 2 && rightHand.FingerCount == 2)
@@ -266,25 +261,6 @@ namespace FingerSpelling.Gestures
             //        {
             //            //StopMode();
             //        }
-            //        else if (leftHand.FingerCount >= 4 && rightHand.FingerCount >= 1)
-            //        {
-            //            //TimeShiftMode(rightHand);
-            //        }
-            //        else if (rightHand.FingerCount == 0 && leftHand.FingerCount == 0)
-            //        {
-            //            //isNew = true;
-            //            //DisabeMoveMode();
-            //        }
-            //        else if (leftHand.FingerCount == 0)
-            //        {
-            //            //DisabeMoveMode();
-            //        }
-            //        else if (rightHand.FingerCount >= 4 && leftHand.FingerCount == 1)
-            //        {
-            //            //CancelMode(leftHand);
-            //        }
-            //    }
-            //}
 
         }
 
@@ -297,14 +273,22 @@ namespace FingerSpelling.Gestures
         {
             Gesture gesture = new Gesture(gestureName, actualHand);
 
-            return DataPersister.saveToFile("XML", gestureName, FileMode.Create, FileAccess.Write, gesture);
+            return DataPersister.SaveToFile("XML", gestureName, FileMode.Create, FileAccess.Write, gesture);
         }
 
 
         public void Clear()
         {
             this.detectionTimer.Stop();
-            this.handDataSource.NewDataAvailable -= handDataSource_NewDataAvailable;
+            if (handDataSource != null)
+            {
+                this.handDataSource.NewDataAvailable -= handDataSource_NewDataAvailable;
+            }
+
+            if (backgroundWorker != null && backgroundWorker.WorkerSupportsCancellation == true)
+            {
+                backgroundWorker.CancelAsync();
+            }
         }
     }
 }

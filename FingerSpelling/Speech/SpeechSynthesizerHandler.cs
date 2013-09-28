@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Speech.Synthesis;
 using System.Diagnostics;
 
@@ -22,12 +20,12 @@ namespace FingerSpelling.Speech
             Debug.WriteLine(installedVoices.Count);
             foreach (VoiceInfo voice in installedVoices)
             {
-                Debug.WriteLine("voice "+voice.Description);
+                Debug.WriteLine("voice " + voice.Description);
             }
 
         }
 
-        public void textToSpeech(String text, int rate, int volume)
+        public void TextToSpeech(String text, int rate, int volume)
         {
             //Geschwindigkeit (-10 - 10)
             speaker.Rate = rate;
@@ -40,7 +38,7 @@ namespace FingerSpelling.Speech
             speaker.SpeakAsync(text);
         }
 
-        public void stopVoice()
+        public void StopVoice()
         {
             speaker.SpeakAsyncCancelAll();
         }

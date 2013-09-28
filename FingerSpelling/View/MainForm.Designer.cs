@@ -2,7 +2,7 @@
 
 namespace FingerSpelling.View
 {
-    partial class AppForm
+    partial class MainForm
     {
         /// <summary>
         /// Required designer variable.
@@ -31,7 +31,10 @@ namespace FingerSpelling.View
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
             this.splitContainer = new System.Windows.Forms.SplitContainer();
+            this.speechCheckBox = new System.Windows.Forms.CheckBox();
+            this.label8 = new System.Windows.Forms.Label();
             this.label7 = new System.Windows.Forms.Label();
             this.detectionRateField = new System.Windows.Forms.NumericUpDown();
             this.groupBoxOrientation = new System.Windows.Forms.GroupBox();
@@ -46,6 +49,7 @@ namespace FingerSpelling.View
             this.detectedValueField = new System.Windows.Forms.Label();
             this.linkLabel = new System.Windows.Forms.LinkLabel();
             this.startButton = new System.Windows.Forms.Button();
+            this.fixPoint = new System.Windows.Forms.Panel();
             this.label4 = new System.Windows.Forms.Label();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
             this.centerPointBox = new System.Windows.Forms.TextBox();
@@ -65,8 +69,6 @@ namespace FingerSpelling.View
             this.recordButton = new System.Windows.Forms.Button();
             this.videoControl = new CCT.NUI.Visual.VideoControl();
             this.notifyIcon = new System.Windows.Forms.NotifyIcon(this.components);
-            this.label8 = new System.Windows.Forms.Label();
-            this.speechCheckBox = new System.Windows.Forms.CheckBox();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer)).BeginInit();
             this.splitContainer.Panel1.SuspendLayout();
             this.splitContainer.Panel2.SuspendLayout();
@@ -106,6 +108,7 @@ namespace FingerSpelling.View
             // splitContainer.Panel2
             // 
             this.splitContainer.Panel2.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(74)))), ((int)(((byte)(69)))), ((int)(((byte)(75)))));
+            this.splitContainer.Panel2.Controls.Add(this.fixPoint);
             this.splitContainer.Panel2.Controls.Add(this.label4);
             this.splitContainer.Panel2.Controls.Add(this.groupBox1);
             this.splitContainer.Panel2.Controls.Add(this.exportGestureButton);
@@ -118,6 +121,28 @@ namespace FingerSpelling.View
             this.splitContainer.SplitterDistance = 230;
             this.splitContainer.SplitterWidth = 2;
             this.splitContainer.TabIndex = 0;
+            // 
+            // speechCheckBox
+            // 
+            this.speechCheckBox.AutoSize = true;
+            this.speechCheckBox.ForeColor = System.Drawing.Color.White;
+            this.speechCheckBox.Location = new System.Drawing.Point(51, 552);
+            this.speechCheckBox.Name = "speechCheckBox";
+            this.speechCheckBox.Size = new System.Drawing.Size(123, 21);
+            this.speechCheckBox.TabIndex = 22;
+            this.speechCheckBox.Text = "Result to speech";
+            this.speechCheckBox.UseVisualStyleBackColor = true;
+            this.speechCheckBox.CheckedChanged += new System.EventHandler(this.speechCheckBox_CheckedChanged);
+            // 
+            // label8
+            // 
+            this.label8.AutoSize = true;
+            this.label8.ForeColor = System.Drawing.Color.White;
+            this.label8.Location = new System.Drawing.Point(183, 506);
+            this.label8.Name = "label8";
+            this.label8.Size = new System.Drawing.Size(25, 17);
+            this.label8.TabIndex = 21;
+            this.label8.Text = "ms";
             // 
             // label7
             // 
@@ -143,10 +168,11 @@ namespace FingerSpelling.View
             0,
             0});
             this.detectionRateField.Name = "detectionRateField";
+            this.detectionRateField.ReadOnly = true;
             this.detectionRateField.Size = new System.Drawing.Size(58, 25);
             this.detectionRateField.TabIndex = 19;
             this.detectionRateField.Value = new decimal(new int[] {
-            1000,
+            2000,
             0,
             0,
             0});
@@ -229,7 +255,7 @@ namespace FingerSpelling.View
             this.radioButtonDepth.TabIndex = 3;
             this.radioButtonDepth.Text = "Depth";
             this.radioButtonDepth.UseVisualStyleBackColor = true;
-            this.radioButtonDepth.CheckedChanged += new System.EventHandler(this.radioButtons_CheckedChanged);
+            this.radioButtonDepth.CheckedChanged += new System.EventHandler(this.imageMode_CheckedChanged);
             // 
             // radioButtonRGB
             // 
@@ -240,7 +266,7 @@ namespace FingerSpelling.View
             this.radioButtonRGB.TabIndex = 2;
             this.radioButtonRGB.Text = "RGB";
             this.radioButtonRGB.UseVisualStyleBackColor = true;
-            this.radioButtonRGB.CheckedChanged += new System.EventHandler(this.radioButtons_CheckedChanged);
+            this.radioButtonRGB.CheckedChanged += new System.EventHandler(this.imageMode_CheckedChanged);
             // 
             // exitButton
             // 
@@ -287,6 +313,15 @@ namespace FingerSpelling.View
             this.startButton.UseVisualStyleBackColor = true;
             this.startButton.Click += new System.EventHandler(this.startButton_Click);
             // 
+            // fixPoint
+            // 
+            this.fixPoint.BackColor = System.Drawing.Color.Red;
+            this.fixPoint.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.fixPoint.Location = new System.Drawing.Point(320, 340);
+            this.fixPoint.Name = "fixPoint";
+            this.fixPoint.Size = new System.Drawing.Size(6, 6);
+            this.fixPoint.TabIndex = 34;
+            // 
             // label4
             // 
             this.label4.AutoSize = true;
@@ -322,7 +357,7 @@ namespace FingerSpelling.View
             this.centerPointBox.Location = new System.Drawing.Point(123, 145);
             this.centerPointBox.Name = "centerPointBox";
             this.centerPointBox.ReadOnly = true;
-            this.centerPointBox.Size = new System.Drawing.Size(148, 25);
+            this.centerPointBox.Size = new System.Drawing.Size(176, 25);
             this.centerPointBox.TabIndex = 32;
             // 
             // label6
@@ -340,7 +375,7 @@ namespace FingerSpelling.View
             this.palmPointBox.Location = new System.Drawing.Point(123, 114);
             this.palmPointBox.Name = "palmPointBox";
             this.palmPointBox.ReadOnly = true;
-            this.palmPointBox.Size = new System.Drawing.Size(148, 25);
+            this.palmPointBox.Size = new System.Drawing.Size(128, 25);
             this.palmPointBox.TabIndex = 30;
             // 
             // label5
@@ -358,7 +393,7 @@ namespace FingerSpelling.View
             this.volumeTextField.Location = new System.Drawing.Point(123, 52);
             this.volumeTextField.Name = "volumeTextField";
             this.volumeTextField.ReadOnly = true;
-            this.volumeTextField.Size = new System.Drawing.Size(148, 25);
+            this.volumeTextField.Size = new System.Drawing.Size(128, 25);
             this.volumeTextField.TabIndex = 23;
             // 
             // fingerPointTextField
@@ -458,7 +493,7 @@ namespace FingerSpelling.View
             this.videoControl.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.videoControl.Location = new System.Drawing.Point(12, 12);
             this.videoControl.Name = "videoControl";
-            this.videoControl.Size = new System.Drawing.Size(640, 480);
+            this.videoControl.Size = new System.Drawing.Size(640, 481);
             this.videoControl.Stretch = false;
             this.videoControl.TabIndex = 0;
             // 
@@ -466,33 +501,12 @@ namespace FingerSpelling.View
             // 
             this.notifyIcon.BalloonTipText = "Finished loading app.";
             this.notifyIcon.BalloonTipTitle = "Finger Spelling App";
-            this.notifyIcon.Text = "everything is connected";
+            this.notifyIcon.Icon = ((System.Drawing.Icon)(resources.GetObject("notifyIcon.Icon")));
+            this.notifyIcon.Text = "Loading app...";
             this.notifyIcon.Visible = true;
             this.notifyIcon.Click += new System.EventHandler(this.notifyIcon_Click);
             // 
-            // label8
-            // 
-            this.label8.AutoSize = true;
-            this.label8.ForeColor = System.Drawing.Color.White;
-            this.label8.Location = new System.Drawing.Point(183, 506);
-            this.label8.Name = "label8";
-            this.label8.Size = new System.Drawing.Size(25, 17);
-            this.label8.TabIndex = 21;
-            this.label8.Text = "ms";
-            // 
-            // speechCheckBox
-            // 
-            this.speechCheckBox.AutoSize = true;
-            this.speechCheckBox.ForeColor = System.Drawing.Color.White;
-            this.speechCheckBox.Location = new System.Drawing.Point(51, 552);
-            this.speechCheckBox.Name = "speechCheckBox";
-            this.speechCheckBox.Size = new System.Drawing.Size(123, 21);
-            this.speechCheckBox.TabIndex = 22;
-            this.speechCheckBox.Text = "Result to speech";
-            this.speechCheckBox.UseVisualStyleBackColor = true;
-            this.speechCheckBox.CheckedChanged += new System.EventHandler(this.speechCheckBox_CheckedChanged);
-            // 
-            // AppForm
+            // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 17F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
@@ -500,8 +514,12 @@ namespace FingerSpelling.View
             this.ClientSize = new System.Drawing.Size(894, 772);
             this.Controls.Add(this.splitContainer);
             this.Font = new System.Drawing.Font("Segoe UI", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
-            this.Name = "AppForm";
+            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
+            this.HelpButton = true;
+            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
+            this.MaximizeBox = false;
+            this.Name = "MainForm";
+            this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Finger Spelling App";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.AppForm_FormClosing);
             this.Load += new System.EventHandler(this.AppForm_Load);
@@ -562,6 +580,7 @@ namespace FingerSpelling.View
         private NumericUpDown detectionRateField;
         private Label label8;
         private CheckBox speechCheckBox;
+        private Panel fixPoint;
 
     }
 }

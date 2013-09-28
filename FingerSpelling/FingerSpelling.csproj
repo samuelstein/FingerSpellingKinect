@@ -82,6 +82,9 @@
   <PropertyGroup>
     <SignManifests>true</SignManifests>
   </PropertyGroup>
+  <PropertyGroup>
+    <ApplicationIcon>hand.ico</ApplicationIcon>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="CCT.NUI.Core, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
@@ -173,7 +176,6 @@
     <Compile Include="Events\GestureFoundEvent.cs" />
     <Compile Include="Events\HandFoundEvent.cs" />
     <Compile Include="Gestures\Gesture.cs" />
-    <Compile Include="Gestures\GestureComparator.cs" />
     <Compile Include="Gestures\GestureDetector.cs" />
     <Compile Include="tools\DataPersister.cs" />
     <Compile Include="tools\MathHelper.cs" />
@@ -264,8 +266,12 @@
     <Folder Include="Resources\DB\temp\" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="hand.ico" />
     <Content Include="MetroFramework.txt" />
     <Content Include="Resources\Assets\calibration.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Resources\Assets\hand.ico">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <Content Include="Resources\DB\raven-data.ico" />

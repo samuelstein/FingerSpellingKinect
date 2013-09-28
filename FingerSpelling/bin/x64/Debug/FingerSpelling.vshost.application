@@ -7,14 +7,14 @@
     <framework targetVersion="4.5" profile="Full" supportedRuntime="4.0.30319" />
   </compatibleFrameworks>
   <dependency>
-    <dependentAssembly dependencyType="install" codebase="FingerSpelling.exe.manifest" size="46546">
+    <dependentAssembly dependencyType="install" codebase="FingerSpelling.exe.manifest" size="47421">
       <assemblyIdentity name="FingerSpelling.exe" version="1.0.0.1" publicKeyToken="0000000000000000" language="neutral" processorArchitecture="amd64" type="win32" />
       <hash>
         <dsig:Transforms>
           <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
         </dsig:Transforms>
         <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
-        <dsig:DigestValue>bq6RTZQwUUzIQxUN7eC5l8e+iUAexv3RJXjn9KLO9Fw=</dsig:DigestValue>
+        <dsig:DigestValue>G53iEMLkex9qQfR+EYvSmgFX+DogMf7xuVQqQQ48iEc=</dsig:DigestValue>
       </hash>
     </dependentAssembly>
   </dependency>
