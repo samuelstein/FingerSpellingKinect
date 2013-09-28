@@ -1,4 +1,4 @@
 FingerSpellingKinect
 ====================
 
-Independent Coursework @ HTW Berlin at Media Informatics Master
+Independent Coursework @ HTW Berlin in Media Informatics Master
