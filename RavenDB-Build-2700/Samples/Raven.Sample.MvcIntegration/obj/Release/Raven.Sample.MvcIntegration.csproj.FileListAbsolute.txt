@@ -1,0 +1,5 @@
+C:\Builds\RavenDB-Stable\build\Raven.Sample.MvcIntegration.dll
+C:\Builds\RavenDB-Stable\build\Raven.Sample.MvcIntegration.pdb
+C:\Builds\RavenDB-Stable\Samples\Raven.Sample.MvcIntegration\obj\Release\Raven.Sample.MvcIntegration.csprojResolveAssemblyReference.cache
+C:\Builds\RavenDB-Stable\Samples\Raven.Sample.MvcIntegration\obj\Release\Raven.Sample.MvcIntegration.dll
+C:\Builds\RavenDB-Stable\Samples\Raven.Sample.MvcIntegration\obj\Release\Raven.Sample.MvcIntegration.pdb

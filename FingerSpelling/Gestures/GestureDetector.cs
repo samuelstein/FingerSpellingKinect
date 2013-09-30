@@ -15,11 +15,11 @@ namespace FingerSpelling.Gestures
 {
     public delegate void GestureFoundEventHandler(object sender, GestureFoundEvent e);
     public delegate void HandFoundEventHandler(object sender, HandFoundEvent e);
-    public delegate void CalibrationEventHandler(object sender, CalibrationEvent e);
     public delegate void NoHandFoundEventHandler(object sender, NoHandFoundEvent e);
     public delegate void ToCloseEventHandler(object sender, ToCloseEvent e);
 
-    //Singleton
+    /// <summary> 
+    /// Its the main class for gesture detection. Fires events if hands found or gone. Is implemented as Singleton</summary> 
     public sealed class GestureDetector
     {
         private bool lefty;
@@ -33,11 +33,9 @@ namespace FingerSpelling.Gestures
         public event GestureFoundEventHandler gestureFoundEventHandler;
         public event HandFoundEventHandler handFoundEventHandler;
         public event NoHandFoundEventHandler noHandFoundEventHandler;
-        public event CalibrationEventHandler calibrationEventHandler;
         public event ToCloseEventHandler toCloseEventHandler;
 
         private static readonly GestureDetector gestureDetector = new GestureDetector();
-        private EmbeddableDocumentStore database = RavenDBEmbedded.getRavenDBInstance.getDBInstance();
 
         private System.Timers.Timer detectionTimer = new System.Timers.Timer();
 
@@ -50,6 +48,8 @@ namespace FingerSpelling.Gestures
 
         }
 
+        /// <summary> 
+        /// Gets the instance of the class.</summary>
         public static GestureDetector GetGestureDetector
         {
             get
@@ -58,6 +58,8 @@ namespace FingerSpelling.Gestures
             }
         }
 
+        /// <summary> 
+        /// Starts detection for hands</summary>
         public void StartDetecting(HandDataSource handDataSource, bool lefty, bool righty, bool speech, int detectionRate)
         {
             this.lefty = lefty;
@@ -72,6 +74,8 @@ namespace FingerSpelling.Gestures
             InitializeBackgroundWorker();
         }
 
+        /// <summary> 
+        /// Initializes the backgroundworker.</summary>
         public void InitializeBackgroundWorker()
         {
 
@@ -96,6 +100,8 @@ namespace FingerSpelling.Gestures
             //backgroundWorker_ProgressChanged);
         }
 
+        /// <summary> 
+        /// Handles the completed event of the worker and starts the detection timer.</summary>
         private void backgroundWorker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
         {
             // First, handle the case where an exception was thrown.
@@ -113,6 +119,8 @@ namespace FingerSpelling.Gestures
 
         }
 
+        /// <summary> 
+        /// Fetchs all gestures from db to cache.</summary>
         private void backgroundWorker_DoWork(object sender, DoWorkEventArgs e)
         {
             BackgroundWorker worker = sender as BackgroundWorker;
@@ -120,7 +128,6 @@ namespace FingerSpelling.Gestures
             if ((worker.CancellationPending == true))
             {
                 e.Cancel = true;
-                //break;
             }
             else
             {
@@ -128,6 +135,8 @@ namespace FingerSpelling.Gestures
             }
         }
 
+        /// <summary> 
+        /// Resets and starts the detection timer.</summary>
         private void ResetRestartTimer(System.Timers.Timer timer, int interval)
         {
             timer.Stop();
@@ -135,6 +144,8 @@ namespace FingerSpelling.Gestures
             timer.Start();
         }
 
+        /// <summary> 
+        /// Event is fired from timer for detection of gestures. Gestures will be recognized and hausdorff distance calculated here.</summary>
         private void RunEvent(object sender, ElapsedEventArgs e)
         {
             HandData recordedHand = this.actualHand;
@@ -146,7 +157,6 @@ namespace FingerSpelling.Gestures
 
             if (recordedHand != null && allGestures != null)
             {
-                //identified = new Gesture("-", recordedHand);
                 List<Gesture> resultList = (from gesture in allGestures where gesture.fingerCount == recordedHand.FingerCount select gesture).ToList();
 
                 Dictionary<Gesture, double> hausdorffDistancesGestures = new Dictionary<Gesture, double>();
@@ -197,12 +207,15 @@ namespace FingerSpelling.Gestures
             ResetRestartTimer(detectionTimer, detectionRate);
         }
 
+        /// <summary> 
+        /// Sets the detection rate from frontend</summary>
         public void SetDetectionRate(int rate)
         {
             this.detectionRate = rate;
         }
 
-
+        /// <summary> 
+        /// Eventhandler will be entered if new hand data is available.</summary>
         private void handDataSource_NewDataAvailable(HandCollection handData)
         {
 
@@ -229,17 +242,7 @@ namespace FingerSpelling.Gestures
 
                     if (actualHand.HasFingers)
                     {
-                        //CALIBRATION
-                        if (actualHand.FingerCount == 5)
-                        {
-                            if (calibrationEventHandler != null)
-                            {
-                                calibrationEventHandler(this, new CalibrationEvent());
 
-                                //Thread.Sleep(500);
-                                this.referenceHand = actualHand;
-                            }
-                        }
                     }
                 }
             }
@@ -264,11 +267,15 @@ namespace FingerSpelling.Gestures
 
         }
 
+        /// <summary> 
+        /// Generates a timestamp.</summary>
         private long GetTimestamp()
         {
             return DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond;
         }
 
+        /// <summary> 
+        /// Records gesture to db.</summary>
         public bool RecordGesture(String gestureName)
         {
             Gesture gesture = new Gesture(gestureName, actualHand);
@@ -276,7 +283,8 @@ namespace FingerSpelling.Gestures
             return DataPersister.SaveToFile("XML", gestureName, FileMode.Create, FileAccess.Write, gesture);
         }
 
-
+        /// <summary> 
+        /// stops worker and hand data event</summary>
         public void Clear()
         {
             this.detectionTimer.Stop();

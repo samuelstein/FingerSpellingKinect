@@ -6,6 +6,9 @@ using CCT.NUI.HandTracking;
 
 namespace FingerSpelling.Gestures
 {
+    /// <summary> 
+    /// Value object for a gesture.</summary>
+
     [Serializable]
     public class Gesture
     {
@@ -18,7 +21,6 @@ namespace FingerSpelling.Gestures
         public float volumeDepth;
         public float volumeWidth;
         public float volumeHeight;
-        public double zoomfactor;
 
         public Gesture()
         {
@@ -45,7 +47,6 @@ namespace FingerSpelling.Gestures
             this.volumeDepth = handData.Volume.Depth;
             this.volumeHeight = handData.Volume.Height;
             this.volumeWidth = handData.Volume.Width;
-            this.zoomfactor = 0;
         }
 
     }

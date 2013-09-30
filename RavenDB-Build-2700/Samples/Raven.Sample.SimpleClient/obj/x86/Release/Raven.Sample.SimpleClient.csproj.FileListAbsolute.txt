@@ -1,0 +1,5 @@
+C:\Builds\RavenDB-Stable\build\Raven.Sample.SimpleClient.exe.config
+C:\Builds\RavenDB-Stable\build\Raven.Sample.SimpleClient.exe
+C:\Builds\RavenDB-Stable\build\Raven.Sample.SimpleClient.pdb
+C:\Builds\RavenDB-Stable\Samples\Raven.Sample.SimpleClient\obj\x86\Release\Raven.Sample.SimpleClient.exe
+C:\Builds\RavenDB-Stable\Samples\Raven.Sample.SimpleClient\obj\x86\Release\Raven.Sample.SimpleClient.pdb

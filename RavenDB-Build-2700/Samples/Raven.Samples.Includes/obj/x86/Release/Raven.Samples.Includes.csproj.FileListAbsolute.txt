@@ -1,0 +1,6 @@
+C:\Builds\RavenDB-Stable\build\Raven.Samples.Includes.exe.config
+C:\Builds\RavenDB-Stable\build\Raven.Samples.Includes.exe
+C:\Builds\RavenDB-Stable\build\Raven.Samples.Includes.pdb
+C:\Builds\RavenDB-Stable\Samples\Raven.Samples.Includes\obj\x86\Release\Raven.Samples.Includes.csprojResolveAssemblyReference.cache
+C:\Builds\RavenDB-Stable\Samples\Raven.Samples.Includes\obj\x86\Release\Raven.Samples.Includes.exe
+C:\Builds\RavenDB-Stable\Samples\Raven.Samples.Includes\obj\x86\Release\Raven.Samples.Includes.pdb

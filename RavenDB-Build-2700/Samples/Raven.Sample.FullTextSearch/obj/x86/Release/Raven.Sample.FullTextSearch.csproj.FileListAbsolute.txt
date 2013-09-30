@@ -1,0 +1,5 @@
+C:\Builds\RavenDB-Stable\build\Raven.Sample.FullTextSearch.exe.config
+C:\Builds\RavenDB-Stable\build\Raven.Sample.FullTextSearch.exe
+C:\Builds\RavenDB-Stable\build\Raven.Sample.FullTextSearch.pdb
+C:\Builds\RavenDB-Stable\Samples\Raven.Sample.FullTextSearch\obj\x86\Release\Raven.Sample.FullTextSearch.exe
+C:\Builds\RavenDB-Stable\Samples\Raven.Sample.FullTextSearch\obj\x86\Release\Raven.Sample.FullTextSearch.pdb

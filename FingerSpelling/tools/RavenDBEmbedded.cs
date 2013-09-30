@@ -5,8 +5,8 @@ using Raven.Database.Server;
 
 namespace FingerSpelling.tools
 {
-    //Singleton
-
+    /// <summary> 
+    /// Representation of ravendb database. Implemented as singleton</summary>
     public sealed class RavenDBEmbedded
     {
         private static EmbeddableDocumentStore documentStore;
@@ -19,6 +19,8 @@ namespace FingerSpelling.tools
             Console.WriteLine("constructing db done");
         }
 
+        /// <summary> 
+        /// Get singleton instance.</summary>
         public static RavenDBEmbedded getRavenDBInstance
         {
             get
@@ -27,23 +29,17 @@ namespace FingerSpelling.tools
             }
         }
 
-        //private RavenDBEmbedded()
-        //{
-        //    InitDocumentStore();
-        //    Console.WriteLine("constructing db");
-        //}
-
         public EmbeddableDocumentStore getDBInstance()
         {
             return documentStore;
         }
 
-
+        /// <summary> 
+        /// Initializes directory for db and allows webui</summary>
         private static void InitDocumentStore()
         {
             // UseEmbeddedHttpServer = tells RavenDB to enable WebUI so we can look at
             // the data and also to enable REST API
-
             NonAdminHttp.EnsureCanListenToWhenInNonAdminContext(8080);
 
             documentStore = new EmbeddableDocumentStore
@@ -54,21 +50,13 @@ namespace FingerSpelling.tools
             //generate a custom Id
             documentStore.Conventions.RegisterIdConvention<Gesture>((dbname, commands, gesture) => "gestures/" + gesture.gestureName);
             documentStore.Initialize();
-            //documentStore.Conventions.JsonContractResolver = new IncludeNonPublicMembersContractResolver();
-            //documentStore.Conventions.JsonContractResolver = new DefaultContractResolver(shareCache: true)
-            //{
-            //    DefaultMembersSearchFlags =
-            //        BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic
-            //};
         }
 
+        /// <summary> 
+        /// Method for implementing a faceted search with lucene.</summary>
         private static void setupFacetedSearch()
         {
-            
-            //List<Facet> findGesture = new List<Facet>
-            //    {
-            //        new Facet{fingerCount=""}
-            //    };
+
 
         }
 

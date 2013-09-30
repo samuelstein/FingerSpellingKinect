@@ -1,0 +1,5 @@
+C:\Builds\RavenDB-Stable\build\Raven.Sample.Suggestions.exe.config
+C:\Builds\RavenDB-Stable\build\Raven.Sample.Suggestions.exe
+C:\Builds\RavenDB-Stable\build\Raven.Sample.Suggestions.pdb
+C:\Builds\RavenDB-Stable\Samples\Raven.Sample.Suggestions\obj\x86\Release\Raven.Sample.Suggestions.exe
+C:\Builds\RavenDB-Stable\Samples\Raven.Sample.Suggestions\obj\x86\Release\Raven.Sample.Suggestions.pdb

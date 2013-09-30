@@ -1,0 +1,5 @@
+C:\Builds\RavenDB-Stable\build\Raven.Sample.LiveProjections.exe.config
+C:\Builds\RavenDB-Stable\build\Raven.Sample.LiveProjections.exe
+C:\Builds\RavenDB-Stable\build\Raven.Sample.LiveProjections.pdb
+C:\Builds\RavenDB-Stable\Samples\Raven.Sample.LiveProjections\obj\x86\Release\Raven.Sample.LiveProjections.exe
+C:\Builds\RavenDB-Stable\Samples\Raven.Sample.LiveProjections\obj\x86\Release\Raven.Sample.LiveProjections.pdb

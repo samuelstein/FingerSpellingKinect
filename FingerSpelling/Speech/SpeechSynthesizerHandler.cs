@@ -7,14 +7,17 @@ using System.Diagnostics;
 
 namespace FingerSpelling.Speech
 {
+    /// <summary> 
+    /// Represents the speech synthesizer.</summary>
     class SpeechSynthesizerHandler
     {
         private SpeechSynthesizer speaker;
 
+        /// <summary> 
+        /// Constructor</summary>
         public SpeechSynthesizerHandler()
         {
             speaker = new SpeechSynthesizer();
-            //In dem Fall unnötig, aber falls zB vorher OutputToWav eingestellt war
             speaker.SetOutputToDefaultAudioDevice();
             List<VoiceInfo> installedVoices = GetInstalledVoices();
             Debug.WriteLine(installedVoices.Count);
@@ -25,25 +28,28 @@ namespace FingerSpelling.Speech
 
         }
 
+        /// <summary> 
+        /// Translates the given string to voice with the desired voice.</summary>
         public void TextToSpeech(String text, int rate, int volume)
         {
-            //Geschwindigkeit (-10 - 10)
+            //speed (-10 - 10)
             speaker.Rate = rate;
-            //Lautstärke (0-100)
+            //volume (0-100)
             speaker.Volume = volume;
-            //Such passende Stimme zu angegebenen Argumenten
+            //Get desired voice
             speaker.SelectVoiceByHints(VoiceGender.Neutral, VoiceAge.Adult);
-            //speaker.SelectVoice("LH Michael");
-            //Text wird ausgegeben (abbrechen mit speaker.CancelAsync())
             speaker.SpeakAsync(text);
         }
 
+        /// <summary> 
+        /// Stops all voices.</summary>
         public void StopVoice()
         {
             speaker.SpeakAsyncCancelAll();
         }
 
-        //zusätzliche Methode, kann manchmal nützlich sein
+        /// <summary> 
+        /// Get all voices installed on the system.</summary>
         private List<VoiceInfo> GetInstalledVoices()
         {
             var listOfVoiceInfo = from voice

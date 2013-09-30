@@ -1,0 +1,5 @@
+C:\Builds\RavenDB-Stable\build\Raven.Sample.ReplicationComplex.exe.config
+C:\Builds\RavenDB-Stable\build\Raven.Sample.ReplicationComplex.exe
+C:\Builds\RavenDB-Stable\build\Raven.Sample.ReplicationComplex.pdb
+C:\Builds\RavenDB-Stable\Samples\Raven.Sample.ReplicationComplex\obj\x86\Release\Raven.Sample.ReplicationComplex.exe
+C:\Builds\RavenDB-Stable\Samples\Raven.Sample.ReplicationComplex\obj\x86\Release\Raven.Sample.ReplicationComplex.pdb

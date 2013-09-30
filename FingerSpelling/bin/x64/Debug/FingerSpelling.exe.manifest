@@ -118,14 +118,14 @@
     </dependentAssembly>
   </dependency>
   <dependency>
-    <dependentAssembly dependencyType="install" allowDelayedBinding="true" codebase="FingerSpelling.exe" size="92160">
+    <dependentAssembly dependencyType="install" allowDelayedBinding="true" codebase="FingerSpelling.exe" size="78336">
       <assemblyIdentity name="FingerSpelling" version="1.0.0.0" language="neutral" processorArchitecture="amd64" />
       <hash>
         <dsig:Transforms>
           <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
         </dsig:Transforms>
         <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
-        <dsig:DigestValue>hInai7lIoJIdW/+JC7cdtLBvOsUiE1nWTehEqoJBkZs=</dsig:DigestValue>
+        <dsig:DigestValue>yf9id3NhGYISPE7jr7XHqJwQ4M/0hnH/j1GyzeSF9SY=</dsig:DigestValue>
       </hash>
     </dependentAssembly>
   </dependency>

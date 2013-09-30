@@ -14,11 +14,15 @@ using Raven.Client.Embedded;
 
 namespace FingerSpelling.tools
 {
+    /// <summary> 
+    /// Static class provides CRUD operations to db and gesture exports to filesystem.</summary>
     public static class DataPersister
     {
         private static readonly String directory = "Resources/Export/Gestures/";
         private static EmbeddableDocumentStore database;
 
+        /// <summary> 
+        /// Saves the gesture to file as XML, STRICTXML or BINARY.</summary>
         public static bool SaveToFile(String fileType, String fileName, FileMode fileMode, FileAccess fileAccess, Gesture persistObject)
         {
             try
@@ -47,6 +51,9 @@ namespace FingerSpelling.tools
             return true;
 
         }
+
+        /// <summary> 
+        /// Writes the gesture as binary stream to filesystem.</summary>
         private static void WriteBinary(String fileType, String fileName, FileMode fileMode, FileAccess fileAccess, Gesture persistObject)
         {
             FileStream stream = new FileStream(@"" + directory + fileName + ".dat", FileMode.Create);
@@ -58,6 +65,8 @@ namespace FingerSpelling.tools
             binaryDictionaryWriter.Close();
         }
 
+        /// <summary> 
+        /// Writes the gesture as strict (crashes if values empty) XML to filesystem.</summary>
         private static void WriteStrictXml(String fileType, String fileName, FileMode fileMode, FileAccess fileAccess, Gesture persistObject)
         {
             XmlSerializer x = new XmlSerializer(persistObject.GetType());
@@ -67,6 +76,8 @@ namespace FingerSpelling.tools
             writer.Close();
         }
 
+        /// <summary> 
+        /// Writes the gesture as XML to filesystem.</summary>
         private static void WriteXml(String fileType, String fileName, FileMode fileMode, FileAccess fileAccess, Gesture persistObject)
         {
             FileStream writer = new FileStream(@"" + directory + fileName + ".xml", FileMode.Create,
@@ -76,6 +87,8 @@ namespace FingerSpelling.tools
             writer.Close();
         }
 
+        /// <summary> 
+        /// Reads the gesture as XML from filesystem.</summary>
         public static void ReadFile(String fileName)
         {
             //Open the file written above and read values from it.
@@ -90,11 +103,15 @@ namespace FingerSpelling.tools
             stream.Close();
         }
 
+        /// <summary> 
+        /// Initializes the database.</summary>
         public static void InitializeDb()
         {
             database = RavenDBEmbedded.getRavenDBInstance.getDBInstance();
         }
 
+        /// <summary> 
+        /// Writes gestures to db.</summary>
         public static String SaveToDb(Gesture gesture)
         {
             IDocumentSession session = database.OpenSession();
@@ -114,8 +131,6 @@ namespace FingerSpelling.tools
             {
                 // rollback changes so we can keep using the session
                 session.Advanced.Evict(gesture);
-                //session.Advanced.Evict(constraint);
-                //throw;
             }
             finally
             {
@@ -125,12 +140,16 @@ namespace FingerSpelling.tools
             return key;
         }
 
+        /// <summary> 
+        /// Reads gestures from db.</summary>
         public static Gesture ReadFromDb(String key)
         {
             IDocumentSession session = database.OpenSession();
             return session.Load<Gesture>(key);
         }
 
+        /// <summary> 
+        /// Searches given gesture from db.</summary>
         public static List<Gesture> searchMatchingGesture(Gesture actualGesture)
         {
             IDocumentSession session = database.OpenSession();
@@ -138,6 +157,8 @@ namespace FingerSpelling.tools
             return session.Query<Gesture>().Where(gesture => gesture.fingerCount == actualGesture.fingerCount).ToList();
         }
 
+        /// <summary> 
+        /// Fetches all gestures from db.</summary>
         public static List<Gesture> FetchAll()
         {
             IDocumentSession session = database.OpenSession();
@@ -145,7 +166,8 @@ namespace FingerSpelling.tools
             return session.Query<Gesture>().ToList();
         }
 
-
+        /// <summary> 
+        /// Writes json formatted gesture to db.</summary>
         public static String SaveToDb(string json)
         {
             IDocumentSession session = database.OpenSession();
@@ -164,7 +186,6 @@ namespace FingerSpelling.tools
             {
                 // rollback changes so we can keep using the session
                 session.Advanced.Evict(json);
-                //session.Advanced.Evict(constraint);
                 throw;
             }
             finally

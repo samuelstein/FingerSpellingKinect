@@ -1,0 +1,5 @@
+C:\Builds\RavenDB-Stable\build\Raven.Sample.Failover.exe.config
+C:\Builds\RavenDB-Stable\build\Raven.Sample.Failover.exe
+C:\Builds\RavenDB-Stable\build\Raven.Sample.Failover.pdb
+C:\Builds\RavenDB-Stable\Samples\Raven.Sample.Failover\obj\x86\Release\Raven.Sample.Failover.exe
+C:\Builds\RavenDB-Stable\Samples\Raven.Sample.Failover\obj\x86\Release\Raven.Sample.Failover.pdb

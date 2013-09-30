@@ -1,7 +1,6 @@
 ﻿using System.ComponentModel;
 using System.Drawing;
 using System.IO;
-using System.Runtime.Serialization.Json;
 using CCT.NUI.Core;
 using CCT.NUI.Core.Clustering;
 using CCT.NUI.Core.OpenNI;
@@ -17,19 +16,17 @@ using FingerSpelling.Events;
 using FingerSpelling.Gestures;
 using FingerSpelling.Speech;
 using FingerSpelling.tools;
-using MetroFramework.Forms;
 using OpenNI;
 using System.Windows.Threading;
-using Raven.Client.Embedded;
 
 namespace FingerSpelling.View
 {
+    /// <summary> 
+    /// Main class. Represents the GUI and GUI Eventhandling.</summary>
     public partial class MainForm : Form
     {
         private IList<IDataSource> activeDataSources;
         private IDataSourceFactory dataSourceFactory;
-        //private IImageDataSource rgbImageDataSource;
-        //private IHandDataSource handDataSource;
 
         private GestureDetector gestureDetector;
         private ScriptNode scriptNode;
@@ -45,7 +42,6 @@ namespace FingerSpelling.View
         private HandDataSourceSettings handDetectionSettings = new HandDataSourceSettings();
         private SpeechSynthesizerHandler speechSynthesizer = new SpeechSynthesizerHandler();
         private bool textToSpeachEnabled = false;
-        private bool isCalibrated;
 
         private Context context;                            // The OpenNI context used for most OpenNI-related operations
         private DepthGenerator depth;                       // This will generate the depth image for you
@@ -56,14 +52,13 @@ namespace FingerSpelling.View
         private HandData handData;
         private BackgroundWorker dbWorker;
 
-        private CalibrationForm calibrationForm;
-        private Stopwatch fpsWatch;
-
         public MainForm()
         {
             InitializeComponent();
         }
 
+        /// <summary> 
+        /// This method does all the initialisation. It is called from the GUI.</summary> 
         private void AppForm_Load(object sender, EventArgs e)
         {
             this.KeyPreview = true;
@@ -72,10 +67,6 @@ namespace FingerSpelling.View
             this.activeDataSources = new List<IDataSource>();
             Cursor.Current = Cursors.Default;
             this.videoControl.ClearLayers();
-            this.fpsWatch = new Stopwatch();
-
-            //this.exportGestureButton.Enabled = false;
-            //this.recordButton.Enabled = false;
 
             g = this.shapeBox.CreateGraphics();
 
@@ -115,10 +106,10 @@ namespace FingerSpelling.View
             //dispatcherTimer.Start();
             notifyIcon.Visible = true;
             notifyIcon.ShowBalloonTip(10000);
-            //Console.WriteLine("Finished loading app.");
-
         }
 
+        /// <summary> 
+        /// Its the result handler of dbWorker. Shows an error if gesture couldn't be saved.</summary> 
         void DbWorkerRunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
         {
             if ((e.Error != null) || (e.Cancelled == true))
@@ -141,6 +132,8 @@ namespace FingerSpelling.View
             }
         }
 
+        /// <summary> 
+        /// In that method the dbWorker will write the captured gesture to db.</summary> 
         void DbWorkerDoWork(object sender, DoWorkEventArgs e)
         {
             BackgroundWorker worker = sender as BackgroundWorker;
@@ -148,7 +141,6 @@ namespace FingerSpelling.View
             if ((worker.CancellationPending == true))
             {
                 e.Cancel = true;
-                //break;
             }
             else
             {
@@ -176,25 +168,22 @@ namespace FingerSpelling.View
                 // Get information about the depth image
                 DepthMetaData depthMD = new DepthMetaData();
                 depth.GetMetaData(depthMD);
-
-                //depth.Timestamp;
-
-                //Console.WriteLine(depth.GetMetaData().FPS);
-                //Console.WriteLine(depth.FrameID.ToString());
             }
             catch (Exception)
             {
             }
-            //UpdateDepth();
         }
 
+        /// <summary> 
+        /// Test method. Writes the depth image object to console.</summary>
         private void depth_NewDataAvailable(object sender, EventArgs e)
         {
             var depth = sender as DepthGenerator;
             Console.WriteLine("depth generator " + depth);
-            //Console.WriteLine("FPS :" + depth.GetMetaData().FPS.ToString());
         }
 
+        /// <summary> 
+        /// The app  closing eventhandler is removing all eventhandlers and cleaning the depth image view.</summary>
         private void AppForm_FormClosing(object sender, FormClosingEventArgs e)
         {
             this.Clear();
@@ -208,6 +197,8 @@ namespace FingerSpelling.View
 
         }
 
+        /// <summary> 
+        /// The xml-configuration of the OpenNI 3d sensor is read and sensor will be initialised.</summary>
         private Boolean InitializeOpenNi()
         {
             try
@@ -225,6 +216,8 @@ namespace FingerSpelling.View
             }
         }
 
+        /// <summary> 
+        /// clean the application, invalidate the videostream display and stop the voice.</summary>
         private void Clear()
         {
             speechSynthesizer.StopVoice();
@@ -239,10 +232,10 @@ namespace FingerSpelling.View
             this.videoControl.Clear();
         }
 
+        /// <summary> 
+        /// starts the hand and finger detection.</summary>
         private void startButton_Click(object sender, EventArgs e)
         {
-            //this.exportGestureButton.Enabled = true;
-            //this.recordButton.Enabled = true;
             this.startButton.Enabled = false;
 
             if (this.initializationDone)
@@ -251,10 +244,11 @@ namespace FingerSpelling.View
             }
         }
 
+        /// <summary> 
+        /// Cleans the eventhandler before closing the app.</summary>
         private void removeEventHandlers()
         {
             this.gestureDetector.handFoundEventHandler -= gestureDetector_handFoundEventHandler;
-            this.gestureDetector.calibrationEventHandler -= gestureDetector_calibrationEventHandler;
             this.gestureDetector.toCloseEventHandler -= gestureDetector_toCloseEventHandler;
             this.gestureDetector.gestureFoundEventHandler -= gestureDetector_gestureFoundEventHandler;
 
@@ -264,11 +258,15 @@ namespace FingerSpelling.View
             }
         }
 
+        /// <summary> 
+        /// Sets the datasource to hand detection.</summary>
         private void SetHandDataSource(IHandDataSource dataSource, bool overrideSource)
         {
             SetDataSource(dataSource, new HandLayer(dataSource), overrideSource);
         }
 
+        /// <summary> 
+        /// switch the datasources.</summary>
         private void SetDataSource(IDataSource dataSource, ILayer layer, bool overrideSource)
         {
             if (overrideSource)
@@ -280,6 +278,8 @@ namespace FingerSpelling.View
             dataSource.Start();
         }
 
+        /// <summary> 
+        /// Sets datasource to image or depth.</summary>
         private void SetImageDataSource(IBitmapDataSource dataSource)
         {
             this.Clear();
@@ -288,12 +288,15 @@ namespace FingerSpelling.View
             dataSource.Start();
         }
 
-
+        /// <summary> 
+        /// Shows a website after clicking the label.</summary>
         private void linkLabel_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
             Process.Start("http://www.samuelstein.de");
         }
 
+        /// <summary> 
+        /// exit the app.</summary>
         private void exitButton_Click(object sender, EventArgs e)
         {
             this.Clear();
@@ -307,6 +310,8 @@ namespace FingerSpelling.View
             this.Close();
         }
 
+        /// <summary> 
+        /// display help message.</summary>
         protected override void OnHelpButtonClicked(CancelEventArgs e)
         {
             e.Cancel = true;
@@ -345,6 +350,8 @@ namespace FingerSpelling.View
             }
         }
 
+        /// <summary> 
+        /// initializes the gesture detector for hand detection.</summary>
         private void StartHandTracking()
         {
             if (this.initializationDone)
@@ -354,24 +361,15 @@ namespace FingerSpelling.View
                 this.SetHandDataSource(handDataSource, false);
 
                 gestureDetector.StartDetecting(handDataSource, this.radioButtonLefty.Checked, this.radioButtonRighty.Checked, this.speechCheckBox.Checked, (int)this.detectionRateField.Value);
-                gestureDetector.calibrationEventHandler += gestureDetector_calibrationEventHandler;
                 gestureDetector.toCloseEventHandler += gestureDetector_toCloseEventHandler;
                 gestureDetector.gestureFoundEventHandler += gestureDetector_gestureFoundEventHandler;
                 gestureDetector.handFoundEventHandler += new HandFoundEventHandler(gestureDetector_handFoundEventHandler);
                 gestureDetector.noHandFoundEventHandler += gestureDetector_noHandFoundEventHandler;
             }
-
-            //fpsWatch.Start();
-
-            if (!isCalibrated)
-            {
-                calibrationForm = new CalibrationForm();
-                calibrationForm.ShowDialog();
-                //Cursor.Current = Cursors.WaitCursor;
-                //this.UseWaitCursor = true;
-            }
         }
 
+        /// <summary> 
+        /// removes all entries from detection view if no hand data is available.</summary>
         private void gestureDetector_noHandFoundEventHandler(object sender, NoHandFoundEvent e)
         {
             this.AddText("-", this.volumeTextField);
@@ -382,35 +380,23 @@ namespace FingerSpelling.View
             this.AddText("-", this.detectedValueField);
         }
 
+        /// <summary> 
+        /// shows the name of the detected gesture.</summary>
         void gestureDetector_gestureFoundEventHandler(object sender, GestureFoundEvent e)
         {
             this.AddText(e.gesture.gestureName, this.detectedValueField);
             Speak(e.gesture.gestureName);
         }
 
+        /// <summary> 
+        /// handles the event if the users hand is to close to sensor.</summary>
         void gestureDetector_toCloseEventHandler(object sender, ToCloseEvent e)
         {
             //MessageBox.Show("Your hand is to close for detection", "To Close Error", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
-        void gestureDetector_calibrationEventHandler(object sender, CalibrationEvent e)
-        {
-
-            if (this.InvokeRequired)
-            {
-                this.Invoke((Action)delegate { gestureDetector_calibrationEventHandler(sender, e); }, null);
-            }
-            else
-            {
-                this.isCalibrated = true;
-                this.startButton.Enabled = false;
-                calibrationForm.Close();
-                //Cursor.Current = Cursors.Default;
-                //this.UseWaitCursor = false;
-                gestureDetector.calibrationEventHandler -= gestureDetector_calibrationEventHandler;
-            }
-        }
-
+        /// <summary> 
+        /// Eventhandler which is called after a hand is detected. He shows hand data.</summary>
         void gestureDetector_handFoundEventHandler(object sender, HandFoundEvent e)
         {
             this.handData = e.handData;
@@ -418,9 +404,7 @@ namespace FingerSpelling.View
             //toolStripMemoryStatusLabel.Text="Memory Usage: "+System.Diagnostics.Process.GetCurrentProcess().WorkingSet64/1000;
             //toolStripStatusLabelFPS.Text = "FPS: "+1/fpsWatch.ElapsedMilliseconds;
 
-            //g.Clear(Color.Black);
-
-            if (handData != null && isCalibrated)
+            if (handData != null)
             {
                 this.AddText("W: " + handData.Volume.Width + " H: " + handData.Volume.Height + " D: " +
                              handData.Volume.Depth, this.volumeTextField);
@@ -437,6 +421,8 @@ namespace FingerSpelling.View
             }
         }
 
+        /// <summary> 
+        /// the recognized gesture will be spoken.</summary>
         private void Speak(String word)
         {
             if (this.textToSpeachEnabled)
@@ -450,34 +436,34 @@ namespace FingerSpelling.View
             }
         }
 
+        /// <summary> 
+        /// This handler switches between camera and depth image.</summary>
         private void imageMode_CheckedChanged(object sender, EventArgs e)
         {
             var radioButton = sender as RadioButton;
 
-            //this.exportGestureButton.Enabled = false;
-            //this.recordButton.Enabled = false;
-
             if (radioButtonRGB.Checked && this.initializationDone)
             {
-                //this.videoControl.Invalidate();
                 this.gestureDetector.Clear();
                 this.SetImageDataSource(this.dataSourceFactory.CreateRGBBitmapDataSource());
                 this.startButton.Enabled = true;
             }
             else if (radioButtonDepth.Checked && this.initializationDone)
             {
-                //this.videoControl.Invalidate();
                 this.SetImageDataSource(this.dataSourceFactory.CreateDepthBitmapDataSource());
                 this.startButton.Enabled = true;
             }
         }
 
-
+        /// <summary> 
+        /// Opens the settings view for the hand detection algorithm.</summary>
         private void settingsButton_Click(object sender, EventArgs e)
         {
             new SettingsForm(this.clusteringSettings, this.shapeSettings, this.handDetectionSettings).Show();
         }
 
+        /// <summary> 
+        /// Key down handler.</summary>
         private void AppForm_KeyDown(object sender, KeyEventArgs e)
         {
             switch (e.KeyCode)
@@ -507,11 +493,15 @@ namespace FingerSpelling.View
             }
         }
 
+        /// <summary> 
+        /// Opens the acrobat reader with the fingeralphabet view.</summary>
         private void fingeralphabetButton_Click(object sender, EventArgs e)
         {
             System.Diagnostics.Process.Start(@"Resources\Assets\fingeralphabet-GERv02-A4_G01.pdf");
         }
 
+        /// <summary> 
+        /// In that method the dbWorker will be called to write the gesture to db.</summary>
         private void recordButton_Click(object sender, EventArgs e)
         {
             gestureDetector = GestureDetector.GetGestureDetector;
@@ -531,6 +521,8 @@ namespace FingerSpelling.View
 
         }
 
+        /// <summary> 
+        /// In that method the dbWorker will read the gesture from db.</summary>
         private void readButton_Click(object sender, EventArgs e)
         {
             if (gestureName.Text != "")
@@ -546,13 +538,14 @@ namespace FingerSpelling.View
 
         }
 
+        /// <summary> 
+        /// In that method the gesture will be exported to file system.</summary>
         private void exportGestureButton_Click(object sender, EventArgs e)
         {
             gestureDetector = GestureDetector.GetGestureDetector;
 
             if (!String.IsNullOrWhiteSpace(gestureName.Text))
             {
-                //bool success = gestureDetector.RecordGesture(gestureName.Text);
                 bool success = DataPersister.SaveToFile("XML", gestureName.Text.ToLower(), FileMode.Create, FileAccess.Write, new Gesture(gestureName.Text.ToLower(), handData));
 
                 if (!success)
@@ -569,11 +562,15 @@ namespace FingerSpelling.View
             }
         }
 
+        /// <summary> 
+        /// Removes the notification icon if clicked.</summary>
         private void notifyIcon_Click(object sender, EventArgs e)
         {
             notifyIcon.Visible = false;
         }
 
+        /// <summary> 
+        /// Changes rate of gesture detection.</summary>
         private void detectionRateField_ValueChanged(object sender, EventArgs e)
         {
             var detectionRate = sender as NumericUpDown;
@@ -582,6 +579,8 @@ namespace FingerSpelling.View
             gestureDetector.SetDetectionRate((int)detectionRate.Value);
         }
 
+        /// <summary> 
+        /// Enables or disables speech.</summary>
         private void speechCheckBox_CheckedChanged(object sender, EventArgs e)
         {
             var speechCheckbox = sender as CheckBox;
